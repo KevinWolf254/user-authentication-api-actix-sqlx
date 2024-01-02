@@ -1,6 +1,6 @@
 use actix_web::{ delete, get, post, web::{ Data, Path, ServiceConfig }, HttpResponse };
 use slog::error;
-use crate::{ AppState, model::permission::CreatePermission, error::AppError };
+use crate::{ AppState, entity::permission::CreatePermission, error::AppError };
 use actix_web_validator::Json;
 
 pub fn init(cfg: &mut ServiceConfig) {

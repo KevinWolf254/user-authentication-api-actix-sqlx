@@ -1,6 +1,6 @@
 use actix_web::{ HttpResponse, web, get, post, put, delete };
 
-use crate::model::user::User;
+use crate::entity::user::User;
 
 #[get("users/{user_id}")]
 pub async fn get_user(path: web::Path<String>) -> HttpResponse {

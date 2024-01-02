@@ -9,7 +9,7 @@ use std::net::Ipv4Addr;
 use std::sync::{Arc, Mutex};
 
 mod handler;
-mod model;
+mod entity;
 mod dao;
 mod error;
 

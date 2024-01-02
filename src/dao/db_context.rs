@@ -4,7 +4,7 @@ use std::sync::Arc;
 use sqlx::{ FromRow, PgPool };
 use sqlx::postgres::{ PgRow, PgPoolOptions };
 
-use crate::model::permission::Permission;
+use crate::entity::permission::Permission;
 
 pub struct Table<'c, T> where T: FromRow<'c, PgRow> {
     pub pool: Arc<PgPool>,
