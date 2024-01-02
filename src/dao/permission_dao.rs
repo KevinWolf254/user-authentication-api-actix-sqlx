@@ -3,9 +3,18 @@ use std::borrow::Cow;
 use chrono::{DateTime, Utc};
 use sqlx::postgres::PgQueryResult;
 
-use crate::{model::permission::{Permission, CreatePermission}, error::AppError, error::AppErrorType};
+use crate::{entity::permission::{Permission, CreatePermission}, error::AppError, error::AppErrorType};
 
 use super::Table;
+struct CountResult {
+    pub count: Option<i64>
+}
+struct PaginatedResult<T> {
+    data: Vec<T>,
+    total: i64,
+    page: i64,
+    page_size: i64
+}
 
 impl<'c> Table<'c, Permission> {
     
@@ -40,6 +49,34 @@ impl<'c> Table<'c, Permission> {
                 }
             },
         }
+    }
+
+    pub async fn find_paginated(&self, page: i64, page_size: i64) -> Result<PaginatedResult<Permission>, sqlx::Error> {
+        let permissions = self.find_by_page_and_page_size(&page, &page_size).await?;
+        let total = self.find_total().await?;
+
+        let result = PaginatedResult {
+            data: permissions,
+            total: total.count.unwrap_or(0),
+            page,
+            page_size
+        };
+
+        Ok(result)
+    }
+
+    async fn find_by_page_and_page_size(&self, page: &i64, page_size: &i64) -> Result<Vec<Permission>, sqlx::Error> {
+        let offset = (page - 1) * page_size;
+        sqlx::query_as!(Permission, r#"SELECT * FROM "SMS_GATEWAY_USER"."PERMISSION" ORDER BY permission_id DESC LIMIT $1 OFFSET $2"#, page_size, offset)
+            .fetch_all(&*self.pool)
+            .await
+    }
+
+    async fn find_total(&self) -> Result<CountResult, sqlx::Error>  {
+        sqlx::query_as!(CountResult, 
+            r#"SELECT COUNT(*) FROM "SMS_GATEWAY_USER"."PERMISSION""#)
+            .fetch_one(&*self.pool)
+            .await        
     }
 
     pub async fn create(&self, request: &CreatePermission) -> Result<Permission, AppError> {
