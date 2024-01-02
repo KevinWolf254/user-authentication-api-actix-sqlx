@@ -3,17 +3,11 @@ use std::borrow::Cow;
 use chrono::{DateTime, Utc};
 use sqlx::postgres::PgQueryResult;
 
-use crate::{entity::permission::{Permission, CreatePermission}, error::AppError, error::AppErrorType};
+use crate::{entity::permission::{Permission, CreatePermission}, error::AppError, error::AppErrorType, dto::pagination::PaginatedResult};
 
 use super::Table;
 struct CountResult {
     pub count: Option<i64>
-}
-struct PaginatedResult<T> {
-    data: Vec<T>,
-    total: i64,
-    page: i64,
-    page_size: i64
 }
 
 impl<'c> Table<'c, Permission> {

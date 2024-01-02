@@ -12,6 +12,7 @@ mod handler;
 mod entity;
 mod dao;
 mod error;
+mod dto;
 
 pub struct AppState<'a> {
     pub connections: Mutex<u32>,
