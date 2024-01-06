@@ -1,24 +1,12 @@
 use actix_web::{ web, App, HttpServer };
-use dao::Database;
+use bulk_sms_api::{AppState, handler};
+use bulk_sms_api::dao::Database;
 use dotenv::dotenv;
-use handler::user_handler::{ create_user, delete_user, get_user, update_user };
 use slog::{Logger, Drain, o, info, warn};
 use std::env;
 use std::fs::OpenOptions;
 use std::net::Ipv4Addr;
 use std::sync::{Arc, Mutex};
-
-mod handler;
-mod entity;
-mod dao;
-mod error;
-mod dto;
-
-pub struct AppState<'a> {
-    pub connections: Mutex<u32>,
-    pub context: Arc<Database<'a>>,
-    pub log: Logger
-}
 
 fn configure_log(log_path: String) -> Logger {
     let file = OpenOptions::new()
@@ -87,10 +75,6 @@ async fn main() -> std::io::Result<()> {
                 web
                     ::scope("api/v1")
                     .configure(handler::init_permission_handler)
-                    .service(get_user)
-                    .service(create_user)
-                    .service(update_user)
-                    .service(delete_user)
             )
     }).bind((localhost, server_port))
     .and_then(|result| {
