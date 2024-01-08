@@ -60,7 +60,7 @@ impl<'c> Table<'c, Permission> {
     }
 
     pub async fn delete(&self, permission_id: &i16) -> Result<PgQueryResult, sqlx::Error> {
-        sqlx::query_as!(Permission, 
+        sqlx::query_as!(PgQueryResult, 
             r#"DELETE FROM "SMS_GATEWAY_USER"."PERMISSION" WHERE permission_id = $1 "#, permission_id)
             .execute(&*self.pool)
             .await
