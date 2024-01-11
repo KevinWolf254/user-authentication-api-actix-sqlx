@@ -3,10 +3,7 @@ use sqlx::postgres::PgQueryResult;
 
 use crate::{entity::permission::{Permission, CreatePermission}, dto::pagination::PaginatedResult};
 
-use super::Table;
-struct CountResult {
-    pub count: Option<i64>
-}
+use super::{Table, CountResult};
 
 impl<'c> Table<'c, Permission> {
 

@@ -5,6 +5,7 @@ use sqlx::{ FromRow, PgPool, Pool };
 use sqlx::postgres::{ PgRow, PgPoolOptions };
 
 use crate::entity::permission::Permission;
+use crate::entity::role::Role;
 
 pub struct Table<'c, T> where T: FromRow<'c, PgRow> {
     pub pool: Arc<PgPool>,
@@ -24,6 +25,7 @@ impl<'c, T> Table<'c, T> where T: FromRow<'c, PgRow> {
 
 pub struct Database<'c> {
     pub permissions: Arc<Table<'c, Permission>>,
+    pub roles: Arc<Table<'c, Role>>,
 }
 
 impl<'a> Database<'a> {
@@ -38,12 +40,14 @@ impl<'a> Database<'a> {
 
         Database {
             permissions: Arc::from(Table::new(pool.clone())),
+            roles: Arc::from(Table::new(pool.clone())),
         }
     }
 
     pub async fn test(pool: Pool<sqlx::Postgres>) -> Database<'a> {
         Database {
             permissions: Arc::from(Table::new(Arc::new(pool.clone()))),
+            roles: Arc::from(Table::new(Arc::new(pool.clone()))),
         }
     }
 }

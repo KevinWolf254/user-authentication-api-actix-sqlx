@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, postgres::PgRow, Row};
 use validator::Validate;
 
-// #[derive(Serialize)]
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Permission {
@@ -28,13 +27,3 @@ impl<'c> FromRow<'c, PgRow> for Permission {
         })
     }
 }
-
-// impl From<&'static str> for Permission {
-//     fn from(role: &'static str) -> Self {
-//         Permission {
-//             permission_id: 0,
-//             max: None,
-//             name: role.to_string()
-//         }
-//     }
-// }
