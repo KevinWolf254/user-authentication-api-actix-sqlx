@@ -3,7 +3,7 @@ use std::env;
 use bulk_sms_api::dao::Database;
 use dotenv::dotenv;
 
-#[actix_rt::test]
+#[sqlx::test]
 async fn new_returns_db_context_when_url_is_valid() {
     dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL has not been set!");

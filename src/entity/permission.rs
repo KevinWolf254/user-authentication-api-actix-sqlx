@@ -4,7 +4,7 @@ use sqlx::{prelude::FromRow, postgres::PgRow, Row};
 use validator::Validate;
 
 // #[derive(Serialize)]
-#[derive(Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Permission {
     pub permission_id: i16,

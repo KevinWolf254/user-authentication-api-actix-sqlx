@@ -6,7 +6,7 @@ pub struct PaginationRequest {
     pub page_size: i64,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct PaginatedResult<T> {
     pub data: Vec<T>,
     pub total: i64,

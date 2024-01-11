@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use sqlx::{ FromRow, PgPool };
+use sqlx::{ FromRow, PgPool, Pool };
 use sqlx::postgres::{ PgRow, PgPoolOptions };
 
 use crate::entity::permission::Permission;
@@ -27,15 +27,23 @@ pub struct Database<'c> {
 }
 
 impl<'a> Database<'a> {
+
     pub async fn new(database_url: &String, max_connections: u32) -> Database<'a> {
         let connection = PgPoolOptions::new()
             .max_connections(max_connections)
             .connect(&database_url).await
             .expect("Unable to connect to the database!");
-        let pool = Arc::new(connection);
+
+        let pool: Arc<sqlx::Pool<sqlx::Postgres>> = Arc::new(connection);
 
         Database {
             permissions: Arc::from(Table::new(pool.clone())),
+        }
+    }
+
+    pub async fn test(pool: Pool<sqlx::Postgres>) -> Database<'a> {
+        Database {
+            permissions: Arc::from(Table::new(Arc::new(pool.clone()))),
         }
     }
 }
