@@ -1,7 +1,7 @@
 use std::env;
 
 use bulk_sms_api::dao::Database;
-use dotenv::dotenv;
+use dotenvy::dotenv;
 
 #[sqlx::test]
 async fn new_returns_db_context_when_url_is_valid() {

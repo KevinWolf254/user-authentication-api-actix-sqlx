@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4.4.0"
-dotenv = "0.15.0"
 serde = { version = "1.0.193", features = ["derive"] }
 chrono = { version = "0.4.31", default-features = false, features = ["clock", "serde"] }
 sqlx = { version = "0.7.3", features = ["postgres", "chrono", "runtime-tokio", "macros"] }
@@ -18,6 +17,7 @@ once_cell = "1.13.0"
 slog = "2.7.0"
 slog-term = "2.9.0"
 slog-async = "2.8.0"
+dotenvy = "0.15.7"
 
 [dev-dependencies]
 actix-rt = "2.9.0"

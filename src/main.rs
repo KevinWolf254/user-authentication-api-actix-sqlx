@@ -1,7 +1,7 @@
 use actix_web::{ web, App, HttpServer };
 use bulk_sms_api::{AppState, handler};
 use bulk_sms_api::dao::Database;
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use slog::{Logger, Drain, o, info, warn};
 use std::env;
 use std::fs::OpenOptions;
