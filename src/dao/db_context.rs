@@ -23,9 +23,40 @@ impl<'c, T> Table<'c, T> where T: FromRow<'c, PgRow> {
     }
 }
 
+pub struct JoinTable<'c, T1, T2>
+where
+    T1: FromRow<'c, PgRow>,
+    T2: FromRow<'c, PgRow>,
+{
+    pub pool: Arc<PgPool>,
+    _from_row: (
+        fn(&'c PgRow) -> Result<T1, sqlx::Error>,
+        fn(&'c PgRow) -> Result<T2, sqlx::Error>,
+    ),
+    _marker_t1: PhantomData<&'c T1>,
+    _marker_t2: PhantomData<&'c T2>,
+}
+
+impl<'c, T1, T2> JoinTable<'c, T1, T2>
+where
+    T1: FromRow<'c, PgRow>,
+    T2: FromRow<'c, PgRow>,
+{
+    fn new(pool: Arc<PgPool>) -> Self {
+        JoinTable {
+            pool,
+            _from_row: (T1::from_row, T2::from_row),
+            _marker_t1: PhantomData,
+            _marker_t2: PhantomData,
+        }
+    }
+}
+
 pub struct Database<'c> {
     pub permissions: Arc<Table<'c, Permission>>,
-    pub roles: Arc<Table<'c, Role>>,
+    pub roles: Arc<Table<'c, Role>>,    
+    pub role_permissions: Arc<JoinTable<'c, Role, Permission>>,
+
 }
 
 impl<'a> Database<'a> {
@@ -41,6 +72,7 @@ impl<'a> Database<'a> {
         Database {
             permissions: Arc::from(Table::new(pool.clone())),
             roles: Arc::from(Table::new(pool.clone())),
+            role_permissions: Arc::from(JoinTable::new(pool.clone())),
         }
     }
 
@@ -48,6 +80,7 @@ impl<'a> Database<'a> {
         Database {
             permissions: Arc::from(Table::new(Arc::new(pool.clone()))),
             roles: Arc::from(Table::new(Arc::new(pool.clone()))),
+            role_permissions: Arc::from(JoinTable::new(Arc::new(pool.clone()))),
         }
     }
 }

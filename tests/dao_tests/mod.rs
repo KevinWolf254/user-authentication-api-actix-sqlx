@@ -7,3 +7,6 @@ mod permission_dao_test;
 
 #[cfg(test)]
 mod role_dao_test;
+
+#[cfg(test)]
+mod role_permission_dao_test;
