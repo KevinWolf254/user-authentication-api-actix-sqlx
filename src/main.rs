@@ -65,7 +65,7 @@ async fn main() -> std::io::Result<()> {
     let app_state = web::Data::new(AppState {
         connections: Mutex::new(0),
         context: Arc::new(db_context),
-        log: log.clone()
+        log: Arc::new(log.clone())
     });
 
     let server = HttpServer::new(move || {

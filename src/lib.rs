@@ -12,5 +12,5 @@ pub mod dto;
 pub struct AppState<'a> {
     pub connections: Mutex<u32>,
     pub context: Arc<Database<'a>>,
-    pub log: Logger
+    pub log: Arc<Logger>
 }
