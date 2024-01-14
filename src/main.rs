@@ -1,24 +1,11 @@
 use actix_web::{ web, App, HttpServer };
-use bulk_sms_api::{AppState, handler};
+use bulk_sms_api::{AppState, handler, configure_log, DEFAULT_LOG_PATH};
 use bulk_sms_api::dao::Database;
 use dotenvy::dotenv;
-use slog::{Logger, Drain, o, info, warn};
+use slog::{info, warn};
 use std::env;
-use std::fs::OpenOptions;
 use std::net::Ipv4Addr;
 use std::sync::{Arc, Mutex};
-
-fn configure_log(log_path: String) -> Logger {
-    let file = OpenOptions::new()
-      .create(true)
-      .append(true)
-      .open(log_path)
-      .unwrap();
-    let decorator = slog_term::PlainDecorator::new(file);
-    let drain = slog_term::FullFormat::new(decorator).build().fuse();
-    let drain = slog_async::Async::new(drain).build().fuse();
-    slog::Logger::root(drain, o!())
-}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -26,7 +13,6 @@ async fn main() -> std::io::Result<()> {
 
     const DEFAULT_SERVER_PORT: u16 = 8080;
     const DEFAULT_MAX_CONNECTIONS: u32 = 5;
-    const DEFAULT_LOG_PATH: &str = "log/sms_gateway.log";
 
     let log_path = env::var("LOG_PATH").unwrap_or_else(|_| DEFAULT_LOG_PATH.to_string());
 

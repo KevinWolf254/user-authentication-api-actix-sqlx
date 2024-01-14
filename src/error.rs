@@ -1,6 +1,6 @@
 use std::{ fmt::Display, fmt::Formatter, fmt::Result };
 
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use actix_web::{ error::ResponseError, http::StatusCode, HttpResponse};
 
 #[derive(Debug)]
@@ -31,9 +31,9 @@ pub enum AppErrorType {
     BadRequestError,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct AppResponseError {
-    error: String,
+    pub error: String,
 }
 
 impl AppResponseError {

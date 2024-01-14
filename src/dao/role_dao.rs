@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use sqlx::postgres::PgQueryResult;
 
 use crate::{entity::role::{Role, CreateRole}, dto::pagination::PaginatedResult};
@@ -49,9 +48,8 @@ impl<'c> Table<'c, Role> {
     }
 
     pub async fn create(&self, request: &CreateRole) -> Result<Role, sqlx::Error> {
-        let now: DateTime<Utc> = Utc::now();
         sqlx::query_as!(Role, 
-            r#"INSERT INTO "SMS_GATEWAY_USER"."ROLE" (name, created_at) VALUES ($1, $2) RETURNING * "#, request.name, now)
+            r#"INSERT INTO "SMS_GATEWAY_USER"."ROLE" (name) VALUES ($1) RETURNING * "#, request.name)
             .fetch_one(&*self.pool)
             .await
     }

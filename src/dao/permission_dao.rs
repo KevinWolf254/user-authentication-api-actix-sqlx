@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use sqlx::postgres::PgQueryResult;
 
 use crate::{entity::permission::{Permission, CreatePermission}, dto::pagination::PaginatedResult};
@@ -49,9 +48,8 @@ impl<'c> Table<'c, Permission> {
     }
 
     pub async fn create(&self, request: &CreatePermission) -> Result<Permission, sqlx::Error> {
-        let now: DateTime<Utc> = Utc::now();
         sqlx::query_as!(Permission, 
-            r#"INSERT INTO "SMS_GATEWAY_USER"."PERMISSION" (name, created_at) VALUES ($1, $2) RETURNING * "#, request.name, now)
+            r#"INSERT INTO "SMS_GATEWAY_USER"."PERMISSION" (name) VALUES ($1) RETURNING * "#, request.name)
             .fetch_one(&*self.pool)
             .await
     }

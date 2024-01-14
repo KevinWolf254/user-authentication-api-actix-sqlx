@@ -1,22 +1,14 @@
-use bulk_sms_api::{entity::permission::{CreatePermission, Permission}, dao::Database};
-use chrono::{DateTime, Utc};
+use bulk_sms_api::{entity::permission::CreatePermission, dao::Database};
 use sqlx::Pool;
 
-#[sqlx::test]
+// #[sqlx::test]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("permission")))]
 pub async fn find_by_id_returns_permission_when_id_exists(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 
-    // given
-    let name = "PERMISSION_WRITE".to_string();
-    let now: DateTime<Utc> = Utc::now();
-
-    let created_permission = sqlx::query_as!(Permission, 
-        r#"INSERT INTO "SMS_GATEWAY_USER"."PERMISSION" (name, created_at) VALUES ($1, $2) RETURNING * "#, name, now)
-        .fetch_one(&*db.permissions.pool)
-        .await.unwrap();
-
+    let permission_id = 1;
     // when
-    let result = db.permissions.find_by_id(&created_permission.permission_id).await;
+    let result = db.permissions.find_by_id(&permission_id).await;
     
     // then
     assert!(result.is_ok());
@@ -24,7 +16,7 @@ pub async fn find_by_id_returns_permission_when_id_exists(pool: Pool<sqlx::Postg
     let created_permission = result.unwrap();
 
     assert!(created_permission.permission_id.is_positive());
-    assert_eq!(created_permission.name, name);
+    assert_eq!(created_permission.name, "PERMISSION_READ");
 }
 
 
@@ -42,27 +34,11 @@ pub async fn find_by_id_returns_error_when_id_does_not_exist(pool: Pool<sqlx::Po
     assert!(result.is_err());
 }
 
-#[sqlx::test]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("permission")))]
 pub async fn find_all_returns_permissions_when_permissions_exists(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 
     // given
-    let mut name = "PERMISSION_READ".to_string();
-    let mut now: DateTime<Utc> = Utc::now();
-
-    sqlx::query_as!(Permission, 
-        r#"INSERT INTO "SMS_GATEWAY_USER"."PERMISSION" (name, created_at) VALUES ($1, $2) RETURNING * "#, name, now)
-        .fetch_one(&*db.permissions.pool)
-        .await.unwrap();
-
-    name = "PERMISSION_WRITE".to_string();
-    now = Utc::now();
-
-    sqlx::query_as!(Permission, 
-        r#"INSERT INTO "SMS_GATEWAY_USER"."PERMISSION" (name, created_at) VALUES ($1, $2) RETURNING * "#, name, now)
-        .fetch_one(&*db.permissions.pool)
-        .await.unwrap();
-
     // when
     let result = db.permissions.find_all().await;
 
@@ -71,7 +47,7 @@ pub async fn find_all_returns_permissions_when_permissions_exists(pool: Pool<sql
 
     let permissions = result.unwrap();
 
-    assert!(permissions.len() == 2);
+    assert_eq!(permissions.len(), 4);
 }
 
 #[sqlx::test]
@@ -89,31 +65,13 @@ pub async fn find_all_returns_empty_when_permissions_do_not_exist(pool: Pool<sql
     assert_eq!(permissions.len(), 0);
 }
 
-#[sqlx::test]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("permission")))]
 pub async fn find_paginated_returns_paginated_result_when_permissions_exist(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 
     // given
     let page = 1;
     let page_size = 5;
-
-    let mut name = "PERMISSION_TEST".to_string();
-    let mut now: DateTime<Utc> = Utc::now();
-
-    let saved = sqlx::query_as!(Permission, 
-        r#"INSERT INTO "SMS_GATEWAY_USER"."PERMISSION" (name, created_at) VALUES ($1, $2) RETURNING permission_id, name, created_at "#, name, now)
-        .fetch_one(&*db.permissions.pool)
-        .await.unwrap();
-
-    dbg!("{:?}", saved);
-
-    name = "PERMISSION_WRITE".to_string();
-    now = Utc::now();
-
-    sqlx::query_as!(Permission, 
-        r#"INSERT INTO "SMS_GATEWAY_USER"."PERMISSION" (name, created_at) VALUES ($1, $2) RETURNING * "#, name, now)
-        .fetch_one(&*db.permissions.pool)
-        .await.unwrap();
 
     // when
     let result = db.permissions.find_paginated(page, page_size).await;
@@ -125,10 +83,10 @@ pub async fn find_paginated_returns_paginated_result_when_permissions_exist(pool
 
     dbg!("{:?}", &result);
 
-    assert_eq!(result.data.len(), 2);
-    assert_eq!(result.total, 2);
+    assert_eq!(result.data.len(), 4);
+    assert_eq!(result.total, 4);
     assert_eq!(result.page, page);
-    assert_eq!(result.page_size, 5);
+    assert_eq!(result.page_size, page_size);
 
 }
 
@@ -155,26 +113,15 @@ pub async fn create_returns_a_permission_when_permission_name_does_not_exist(poo
     assert_eq!(created_permission.name, name);
 }
 
-#[sqlx::test]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("permission")))]
 pub async fn create_returns_an_error_when_permission_name_already_exists(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 
     // given
-    let name = "PERMISSION_UPDATE".to_string();
-    let now: DateTime<Utc> = Utc::now();
-
-    sqlx::query_as!(Permission, 
-        r#"DELETE FROM "SMS_GATEWAY_USER"."PERMISSION" WHERE name = $1 "#, &name)
-        .execute(&*db.permissions.pool)
-        .await.unwrap();
-    
-    sqlx::query_as!(Permission, 
-        r#"INSERT INTO "SMS_GATEWAY_USER"."PERMISSION" (name, created_at) VALUES ($1, $2) RETURNING * "#, &name, &now)
-        .fetch_one(&*db.permissions.pool)
-        .await.unwrap();
+    let name = "PERMISSION_READ";
     
     let permission = CreatePermission {
-        name: name.clone()
+        name: name.to_string()
     };
 
     // when
@@ -184,21 +131,15 @@ pub async fn create_returns_an_error_when_permission_name_already_exists(pool: P
     assert!(result.is_err());
 }
 
-#[sqlx::test]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("permission")))]
 pub async fn delete_by_id_returns_rows_affected_eq_one_when_id_exists(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 
     // given
-    let name = "PERMISSION_WRITE".to_string();
-    let now: DateTime<Utc> = Utc::now();
-
-    let created_permission = sqlx::query_as!(Permission, 
-        r#"INSERT INTO "SMS_GATEWAY_USER"."PERMISSION" (name, created_at) VALUES ($1, $2) RETURNING * "#, name, now)
-        .fetch_one(&*db.permissions.pool)
-        .await.unwrap();
+    let permission_id = 1;
 
     // when
-    let result = db.permissions.delete(&created_permission.permission_id).await;
+    let result = db.permissions.delete(&permission_id).await;
     
     // then
     assert!(result.is_ok());
