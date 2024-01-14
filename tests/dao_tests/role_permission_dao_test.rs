@@ -126,11 +126,7 @@ pub async fn find_role_permissions_returns_empty_when_role_id_does_not_exist(poo
 
     dbg!("{:?}", &result);
     // then
-    assert!(result.is_ok());
-
-    let result = result.unwrap();
-
-    assert_eq!(result.len(), 0);
+    assert!(result.is_err());
 }
 
 #[sqlx::test]

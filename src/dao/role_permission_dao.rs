@@ -52,10 +52,14 @@ impl<'c> JoinTable<'c, Role, Permission> {
     }
 
     pub async fn find_role_permissions(&self, role_id: &i16) -> Result<Vec<Permission>, sqlx::Error> {
+        let role = sqlx::query_as!(Role, 
+            r#"SELECT * FROM "SMS_GATEWAY_USER"."ROLE" WHERE role_id = $1 "#, role_id)
+            .fetch_one(&*self.pool)
+            .await?;
 
         sqlx::query_as!(Permission, 
             r#"SELECT * FROM "SMS_GATEWAY_USER"."PERMISSION" p WHERE p.permission_id IN (SELECT r.permission_id FROM "SMS_GATEWAY_USER"."ROLE_PERMISSION" r WHERE r.role_id = $1)"#, 
-            role_id)
+            role.role_id)
             .fetch_all(&*self.pool)
             .await
     }

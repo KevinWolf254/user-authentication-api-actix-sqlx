@@ -116,8 +116,8 @@ pub async fn create_permission_returns_ok_when_name_does_not_exist(pool: Pool<sq
     let payload = json!(body);
 
     let request = test::TestRequest::post().uri("/permissions")
-    .set_json(&payload)
-    .to_request();
+        .set_json(&payload)
+        .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
