@@ -214,7 +214,7 @@ pub async fn get_role_permissions_returns_ok(pool: Pool<sqlx::Postgres>) {
 
     let result: Vec<Permission> = serde_json::from_slice(&body).expect("Failed to deserialize error");
 
-    assert_eq!(result.len(), 1);
+    assert_eq!(result.len(), 4);
 }
 
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role")))]
