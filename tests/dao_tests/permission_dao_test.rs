@@ -1,7 +1,6 @@
 use bulk_sms_api::{entity::permission::CreatePermission, dao::Database};
 use sqlx::Pool;
 
-// #[sqlx::test]
 #[sqlx::test(fixtures(path = "../fixtures", scripts("permission")))]
 pub async fn find_by_id_returns_permission_when_id_exists(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
@@ -18,7 +17,6 @@ pub async fn find_by_id_returns_permission_when_id_exists(pool: Pool<sqlx::Postg
     assert!(created_permission.permission_id.is_positive());
     assert_eq!(created_permission.name, "PERMISSION_READ");
 }
-
 
 #[sqlx::test]
 pub async fn find_by_id_returns_error_when_id_does_not_exist(pool: Pool<sqlx::Postgres>) {
