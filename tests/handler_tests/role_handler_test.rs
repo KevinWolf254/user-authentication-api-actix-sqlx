@@ -188,7 +188,34 @@ pub async fn delete_role_with_id_returns_ok_when_id_exists(pool: Pool<sqlx::Post
     let result: AppResponse = serde_json::from_slice(&body).expect("Failed to deserialize error");
 
     assert_eq!(result.message, "Role deleted successfully.");
-    // then
+}
+
+#[sqlx::test]
+pub async fn delete_role_with_id_returns_not_found_when_id_does_not_exist(pool: Pool<sqlx::Postgres>) {
+    let app_state = init_app_state(pool).await;
+
+    let mut app = test::init_service(
+        App::new()
+            .app_data(app_state.clone())
+            .configure(handler::init_role_handler),
+    )
+    .await;
+
+    // given
+    let role_id = 1;
+
+    // when
+    let request = test::TestRequest::delete().uri(format!("/roles/{}", role_id).as_str()).to_request();
+
+    let response = test::call_service(&mut app, request).await;
+
+    assert_eq!(response.status(), http::StatusCode::NOT_FOUND);
+
+    let body = test::read_body(response).await;
+
+    let result: AppResponseError = serde_json::from_slice(&body).expect("Failed to deserialize error");
+
+    assert_eq!(result.error, "Role with id 1 could not be found!");
 }
 
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role", "permission", "role_permission")))]
