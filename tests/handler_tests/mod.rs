@@ -7,7 +7,10 @@ use sqlx::Pool;
 
 #[cfg(test)]
 mod permission_handler_test;
+#[cfg(test)]
 mod role_handler_test;
+#[cfg(test)]
+mod user_handler_test;
 
 pub async fn init_app_state(pool: Pool<sqlx::Postgres>) -> Data<AppState<'static>> {
     dotenv().ok();

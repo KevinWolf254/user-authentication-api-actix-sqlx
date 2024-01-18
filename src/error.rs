@@ -31,7 +31,7 @@ pub enum AppErrorType {
     BadRequestError,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AppResponseError {
     pub error: String,
 }
