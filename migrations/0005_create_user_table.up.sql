@@ -1,7 +1,7 @@
 -- Add up migration script here
 CREATE TABLE "SMS_GATEWAY_USER"."USER"
 (
-    user_id smallint NOT NULL,
+    user_id serial NOT NULL,
     first_name character varying(150) NOT NULL,
     middle_name character varying(150),
     surname character varying(150) NOT NULL,

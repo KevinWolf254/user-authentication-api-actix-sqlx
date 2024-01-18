@@ -21,7 +21,6 @@ pub struct User {
     // pub organisation_id: u32,
 }
 
-
 impl<'c> FromRow<'c, PgRow> for User {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         Ok(User {
