@@ -1,7 +1,7 @@
 use actix_web::{ delete, get, post, put, web::{ Data, Path, ServiceConfig, Query }, HttpResponse };
 use slog::error;
 use sqlx::Error::RowNotFound;
-use crate::{ AppState, error::{AppError, AppErrorType, AppResponseError}, dto::{pagination::PaginationRequest, app_response::AppResponse, create_user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}} };
+use crate::{ AppState, error::{AppError, AppErrorType, AppResponseError}, dto::{pagination::PaginationRequest, app_response::AppResponse, user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}} };
 use actix_web_validator::Json;
 
 pub fn init(cfg: &mut ServiceConfig) {

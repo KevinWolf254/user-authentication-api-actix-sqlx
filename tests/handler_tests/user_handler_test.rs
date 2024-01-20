@@ -1,5 +1,5 @@
 use actix_web::{test, App, http};
-use bulk_sms_api::{handler, entity::user::User, error::AppResponseError, dto::{app_response::AppResponse, pagination::PaginatedResult, create_user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}}};
+use bulk_sms_api::{handler, entity::user::User, error::AppResponseError, dto::{app_response::AppResponse, pagination::PaginatedResult, user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}}};
 use sqlx::Pool;
 use serde_json::json;
 

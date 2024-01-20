@@ -1,6 +1,6 @@
 use sqlx::postgres::PgQueryResult;
 
-use crate::{entity::user::User, dto::{pagination::PaginatedResult, create_user::{CreateUser, UpdateUser}}};
+use crate::{entity::user::User, dto::{pagination::PaginatedResult, user::{CreateUser, UpdateUser}}};
 
 use super::{Table, CountResult};
 
