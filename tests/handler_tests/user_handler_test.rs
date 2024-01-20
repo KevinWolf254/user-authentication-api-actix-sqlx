@@ -1,5 +1,5 @@
 use actix_web::{test, App, http};
-use bulk_sms_api::{handler, entity::user::User, error::AppResponseError, dto::{app_response::AppResponse, pagination::PaginatedResult, create_user::{CreateUser, UpdateUser}}};
+use bulk_sms_api::{handler, entity::user::User, error::AppResponseError, dto::{app_response::AppResponse, pagination::PaginatedResult, create_user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}}};
 use sqlx::Pool;
 use serde_json::json;
 
@@ -298,4 +298,229 @@ pub async fn delete_user_with_id_returns_ok_when_id_exists(pool: Pool<sqlx::Post
     let result: AppResponse = serde_json::from_slice(&body).expect("Failed to deserialize error");
 
     assert_eq!(result.message, "User deleted successfully.");
+}
+
+#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+pub async fn create_user_credential_returns_ok(pool: Pool<sqlx::Postgres>) {
+    let app_state = init_app_state(pool).await;
+    
+    let mut app = test::init_service(
+        App::new()
+            .app_data(app_state.clone())
+            .configure(handler::init_user_handler),
+    )
+    .await;
+
+    // given
+    let body = CreateUserCredential {
+        username: "JohnDoe".to_string(),
+        password: "Pass12345".to_string(),
+    };
+
+    let payload = json!(body);
+
+    // when
+    let request = test::TestRequest::post().uri("/users/1/credentials")
+        .set_json(&payload)
+        .to_request();
+
+    let response = test::call_service(&mut app, request).await;
+
+    // then
+    assert_eq!(response.status(), http::StatusCode::CREATED);
+
+    let body = test::read_body(response).await;
+    let response: AppResponse = serde_json::from_slice(&body).expect("Failed to deserialize error");
+
+    dbg!(":?", &response);
+
+    assert_eq!(response.message, "Successfully created!");
+}
+
+#[sqlx::test(fixtures(path = "../fixtures", scripts("user", "user_credential")))]
+pub async fn create_user_credential_returns_error_when_username_already_exists(pool: Pool<sqlx::Postgres>) {
+    let app_state = init_app_state(pool).await;
+    
+    let mut app = test::init_service(
+        App::new()
+            .app_data(app_state.clone())
+            .configure(handler::init_user_handler),
+    )
+    .await;
+
+    // given
+    let body = CreateUserCredential {
+        username: "tester".to_string(),
+        password: "Pass12345".to_string(),
+    };
+
+    let payload = json!(body);
+
+    // when
+    let request = test::TestRequest::post().uri("/users/2/credentials")
+        .set_json(&payload)
+        .to_request();
+
+    let response = test::call_service(&mut app, request).await;
+
+    // then
+    assert_eq!(response.status(), http::StatusCode::BAD_REQUEST);
+
+    let body = test::read_body(response).await;
+    let response: AppResponseError = serde_json::from_slice(&body).expect("Failed to deserialize error");
+
+    dbg!(":?", &response);
+
+    assert_eq!(response.error, "Credential/username already exists!");
+}
+
+#[sqlx::test]
+pub async fn create_user_credential_returns_error_when_user_does_not_exist(pool: Pool<sqlx::Postgres>) {
+    let app_state = init_app_state(pool).await;
+    
+    let mut app = test::init_service(
+        App::new()
+            .app_data(app_state.clone())
+            .configure(handler::init_user_handler),
+    )
+    .await;
+
+    // given
+    let body = CreateUserCredential {
+        username: "JohnDoe".to_string(),
+        password: "Pass12345".to_string(),
+    };
+
+    let payload = json!(body);
+
+    // when
+    let request = test::TestRequest::post().uri("/users/1/credentials")
+        .set_json(&payload)
+        .to_request();
+
+    let response = test::call_service(&mut app, request).await;
+
+    // then
+    assert_eq!(response.status(), http::StatusCode::NOT_FOUND);
+
+    let body = test::read_body(response).await;
+    let response: AppResponseError = serde_json::from_slice(&body).expect("Failed to deserialize error");
+
+    dbg!(":?", &response);
+    
+    assert_eq!(response.error, "User with id 1 could not be found!");
+}
+
+#[sqlx::test(fixtures(path = "../fixtures", scripts("user", "user_credential")))]
+pub async fn update_user_credential_returns_ok(pool: Pool<sqlx::Postgres>) {
+    let app_state = init_app_state(pool).await;
+    
+    let mut app = test::init_service(
+        App::new()
+            .app_data(app_state.clone())
+            .configure(handler::init_user_handler),
+    )
+    .await;
+
+    // given
+    let body = UpdateUserCredential {
+        password: "newpassword".to_string(),
+    };
+
+    let payload = json!(body);
+
+    // when
+    let request = test::TestRequest::put().uri("/users/1/credentials/1")
+        .set_json(&payload)
+        .to_request();
+
+    dbg!(":?", &request);
+
+    let response = test::call_service(&mut app, request).await;
+
+    // then
+    assert_eq!(response.status(), http::StatusCode::OK);
+
+    let body = test::read_body(response).await;
+    let response: AppResponse = serde_json::from_slice(&body).expect("Failed to deserialize error");
+
+    dbg!(":?", &response);
+
+    assert_eq!(response.message, "Successfully updated!");
+}
+
+#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+pub async fn update_user_credential_returns_error_when_credential_does_not_exist(pool: Pool<sqlx::Postgres>) {
+    let app_state = init_app_state(pool).await;
+    
+    let mut app = test::init_service(
+        App::new()
+            .app_data(app_state.clone())
+            .configure(handler::init_user_handler),
+    )
+    .await;
+
+    // given
+    let body = UpdateUserCredential {
+        password: "newpassword".to_string(),
+    };
+
+    let payload = json!(body);
+
+    // when
+    let request = test::TestRequest::put().uri("/users/1/credentials/1")
+        .set_json(&payload)
+        .to_request();
+
+    dbg!(":?", &request);
+
+    let response = test::call_service(&mut app, request).await;
+
+    // then
+    assert_eq!(response.status(), http::StatusCode::NOT_FOUND);
+
+    let body = test::read_body(response).await;
+    let response: AppResponseError = serde_json::from_slice(&body).expect("Failed to deserialize error");
+
+    dbg!(":?", &response);
+
+    assert_eq!(response.error, "Credential does not exist!");
+}
+
+#[sqlx::test]
+pub async fn update_user_credential_returns_error_when_user_and_credential_do_not_exist(pool: Pool<sqlx::Postgres>) {
+    let app_state = init_app_state(pool).await;
+    
+    let mut app = test::init_service(
+        App::new()
+            .app_data(app_state.clone())
+            .configure(handler::init_user_handler),
+    )
+    .await;
+
+    // given
+    let body = UpdateUserCredential {
+        password: "newpassword".to_string(),
+    };
+
+    let payload = json!(body);
+
+    // when
+    let request = test::TestRequest::put().uri("/users/1/credentials/1")
+        .set_json(&payload)
+        .to_request();
+
+    dbg!(":?", &request);
+
+    let response = test::call_service(&mut app, request).await;
+
+    // then
+    assert_eq!(response.status(), http::StatusCode::NOT_FOUND);
+
+    let body = test::read_body(response).await;
+    let response: AppResponseError = serde_json::from_slice(&body).expect("Failed to deserialize error");
+
+    dbg!(":?", &response);
+
+    assert_eq!(response.error, "Credential does not exist!");
 }
