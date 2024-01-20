@@ -7,6 +7,7 @@ use sqlx::postgres::{ PgRow, PgPoolOptions };
 use crate::entity::permission::Permission;
 use crate::entity::role::Role;
 use crate::entity::user::User;
+use crate::entity::user_credential::UserCredential;
 
 pub struct Table<'c, T> where T: FromRow<'c, PgRow> {
     pub pool: Arc<PgPool>,
@@ -57,7 +58,8 @@ pub struct Database<'c> {
     pub permissions: Arc<Table<'c, Permission>>,
     pub roles: Arc<Table<'c, Role>>,    
     pub role_permissions: Arc<JoinTable<'c, Role, Permission>>,
-    pub users: Arc<Table<'c, User>>,    
+    pub users: Arc<Table<'c, User>>,  
+    pub user_credentials: Arc<Table<'c, UserCredential>>,  
 }
 
 impl<'a> Database<'a> {
@@ -75,6 +77,7 @@ impl<'a> Database<'a> {
             roles: Arc::from(Table::new(pool.clone())),
             role_permissions: Arc::from(JoinTable::new(pool.clone())),
             users: Arc::from(Table::new(pool.clone())),
+            user_credentials: Arc::from(Table::new(pool.clone())),
         }
     }
 
@@ -84,6 +87,7 @@ impl<'a> Database<'a> {
             roles: Arc::from(Table::new(Arc::new(pool.clone()))),
             role_permissions: Arc::from(JoinTable::new(Arc::new(pool.clone()))),
             users: Arc::from(Table::new(Arc::new(pool.clone()))),
+            user_credentials: Arc::from(Table::new(Arc::new(pool.clone()))),
         }
     }
 }

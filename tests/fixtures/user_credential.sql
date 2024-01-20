@@ -1,0 +1,1 @@
+INSERT INTO "SMS_GATEWAY_USER"."USER_CREDENTIAL" (username, password, user_id) VALUES ('tester', '1234567', 1);

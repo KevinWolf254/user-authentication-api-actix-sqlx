@@ -13,3 +13,6 @@ mod role_permission_dao_test;
 
 #[cfg(test)]
 mod user_dao_test;
+
+#[cfg(test)]
+mod user_credentials_dao_test;

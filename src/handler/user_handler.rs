@@ -1,7 +1,7 @@
 use actix_web::{ delete, get, post, put, web::{ Data, Path, ServiceConfig, Query }, HttpResponse };
 use slog::error;
 use sqlx::Error::RowNotFound;
-use crate::{ AppState, error::{AppError, AppErrorType, AppResponseError}, dto::{pagination::PaginationRequest, app_response::AppResponse, create_user::{CreateUser, UpdateUser}} };
+use crate::{ AppState, error::{AppError, AppErrorType, AppResponseError}, dto::{pagination::PaginationRequest, app_response::AppResponse, create_user::{CreateUser, UpdateUser}, user_credentials::CreateUserCredential} };
 use actix_web_validator::Json;
 
 pub fn init(cfg: &mut ServiceConfig) {
@@ -61,6 +61,45 @@ pub async fn create_user(state: Data<AppState<'_>>, body: Json<CreateUser>) -> R
             }
         })
 }
+
+// #[post("users/{user_id}/credentials")]
+// pub async fn create_user_credential(state: Data<AppState<'_>>, path: Path<i32>, body: Json<CreateUserCredential>) -> Result<HttpResponse , AppError>  {
+//     let user_id = path.into_inner();
+//     state.context.user_credentials.create(&user_id, &body.into_inner()).await
+//         .map(|user| HttpResponse::Created().json(user))
+//         .map_err(|error| {
+//             error!(state.log, "Error occured: {:?}", error); 
+//             match &error {
+//                 sqlx::Error::Database(d) if d.code().map_or(false, |code| code.eq("23503")) => {
+//                     AppError::new(Some("User does not exist!".to_string()), None, AppErrorType::BadRequestError)
+//                 },
+//                 sqlx::Error::Database(d) if d.code().map_or(false, |code| code.eq("23505")) => {
+//                     AppError::new(Some("Credential/username already exists!".to_string()), None, AppErrorType::BadRequestError)
+//                 }
+//                 _ => AppError::new(None, Some(error.to_string()), AppErrorType::DBError),
+//             }
+//         })
+// }
+
+// #[post("users/{user_id}/credentials/{user_credential_id}")]
+// pub async fn update_user_credential(state: Data<AppState<'_>>, path: Path<i32>, body: Json<CreateUserCredential>) -> Result<HttpResponse , AppError>  {
+//     let user_id = path.into_inner();
+//     state.context.user_credentials.create(&user_id, &body.into_inner()).await
+//         .map(|user| HttpResponse::Created().json(user))
+//         .map_err(|error| {
+//             error!(state.log, "Error occured: {:?}", error); 
+//             match &error {
+//                 sqlx::Error::Database(d) if d.code().map_or(false, |code| code.eq("23503")) => {
+//                     AppError::new(Some("Credential does not exist!".to_string()), None, AppErrorType::BadRequestError)
+//                 },
+//                 sqlx::Error::Database(d) if d.code().map_or(false, |code| code.eq("23505")) => {
+//                     AppError::new(Some("Username already exists!".to_string()), None, AppErrorType::BadRequestError)
+//                 },
+//                 sqlx::Error::RowNotFound => AppError::new(Some("Credential does not exist!".to_string()), None, AppErrorType::NotFoundError),
+//                 _ => AppError::new(None, Some(error.to_string()), AppErrorType::DBError),
+//             }
+//         })
+// }
 
 #[put("users/{user_id}")]
 pub async fn update_user(state: Data<AppState<'_>>, path: Path<i32>, body: Json<UpdateUser>) -> Result<HttpResponse , AppError>  {
