@@ -81,7 +81,7 @@ pub async fn get_users_returns_ok(pool: Pool<sqlx::Postgres>) {
     let body = test::read_body(response).await;
     let response: Vec<User> = serde_json::from_slice(&body).expect("Failed to deserialize error");
 
-    assert_eq!(response.len(), 1);
+    assert_eq!(response.len(), 2);
 }
 
 #[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
@@ -111,7 +111,7 @@ pub async fn get_users_paginated_returns_ok(pool: Pool<sqlx::Postgres>) {
 
     assert_eq!(response.page, 1);
     assert_eq!(response.page_size, 5);
-    assert_eq!(response.total, 1);
+    assert_eq!(response.total, 2);
 
 }
 

@@ -45,7 +45,7 @@ pub async fn find_all_returns_users_when_users_exists(pool: Pool<sqlx::Postgres>
 
     let users = result.unwrap();
 
-    assert_eq!(users.len(), 1);
+    assert_eq!(users.len(), 2);
 }
 
 #[sqlx::test]
@@ -81,8 +81,8 @@ pub async fn find_paginated_returns_paginated_result_when_users_exist(pool: Pool
 
     dbg!("{:?}", &result);
 
-    assert_eq!(result.data.len(), 1);
-    assert_eq!(result.total, 1);
+    assert_eq!(result.data.len(), 2);
+    assert_eq!(result.total, 2);
     assert_eq!(result.page, page);
     assert_eq!(result.page_size, page_size);
 }
