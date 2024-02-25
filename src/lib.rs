@@ -1,5 +1,6 @@
 use std::{sync::{Mutex, Arc}, fs::OpenOptions};
 
+use argon2::Config;
 use dao::Database;
 use slog::{Logger, Drain, o};
 
@@ -8,13 +9,15 @@ pub mod entity;
 pub mod dao;
 pub mod error;
 pub mod dto;
+pub mod util;
 
 pub const DEFAULT_LOG_PATH: &str = "log/sms_gateway.log";
 
 pub struct AppState<'a> {
     pub connections: Mutex<u32>,
     pub context: Arc<Database<'a>>,
-    pub log: Arc<Logger>
+    pub log: Arc<Logger>,
+    pub argon_config: Arc<Config<'a>>,
 }
 
 pub fn configure_log(log_path: String) -> Logger {

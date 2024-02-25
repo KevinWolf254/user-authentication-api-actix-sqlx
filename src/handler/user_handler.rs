@@ -1,7 +1,7 @@
 use actix_web::{ delete, get, post, put, web::{ Data, Path, ServiceConfig, Query }, HttpResponse };
 use slog::error;
 use sqlx::Error::RowNotFound;
-use crate::{ AppState, error::{AppError, AppErrorType, AppResponseError}, dto::{pagination::PaginationRequest, app_response::AppResponse, user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}} };
+use crate::{ dto::{pagination::PaginationRequest, app_response::AppResponse, user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}}, error::{AppError, AppErrorType, AppResponseError}, util, AppState };
 use actix_web_validator::Json;
 
 pub fn init(cfg: &mut ServiceConfig) {
@@ -67,7 +67,11 @@ pub async fn create_user(state: Data<AppState<'_>>, body: Json<CreateUser>) -> R
 #[post("users/{user_id}/credentials")]
 pub async fn create_user_credential(state: Data<AppState<'_>>, path: Path<i32>, body: Json<CreateUserCredential>) -> Result<HttpResponse , AppError>  {
     let user_id = path.into_inner();
-    state.context.user_credentials.create(&user_id, &body.into_inner()).await
+    let CreateUserCredential { username, password }= body.into_inner();
+
+    let hashed_password = util::hash_password(&password, &state.argon_config).await?;
+
+    state.context.user_credentials.create(&user_id, &CreateUserCredential{ username, password: hashed_password }).await
         .map(|_| HttpResponse::Created().json(AppResponse { message: "Successfully created!" }))
         .map_err(|error| {
             error!(state.log, "Error occured: {:?}", error); 
@@ -86,7 +90,27 @@ pub async fn create_user_credential(state: Data<AppState<'_>>, path: Path<i32>, 
 #[put("users/{user_id}/credentials/{user_credential_id}")]
 pub async fn update_user_credential(state: Data<AppState<'_>>, path: Path<(i32, i32)>, body: Json<UpdateUserCredential>) -> Result<HttpResponse , AppError>  {
     let (user_id, user_credential_id) = path.into_inner();
-    state.context.user_credentials.update(&user_id, &user_credential_id, &body.into_inner()).await
+    let UpdateUserCredential { previous_password, password } = body.into_inner();
+
+    let user_credential = state.context.user_credentials.find_by_user_id(&user_id).await
+        .map_err(|error| {
+            error!(state.log, "Error occured: {:?}", error); 
+            match &error {
+                sqlx::Error::Database(d) if d.code().map_or(false, |code| code.eq("23503")) => {
+                    AppError::new(Some("Credential does not exist!".to_string()), None, AppErrorType::BadRequestError)
+                },
+                sqlx::Error::RowNotFound => AppError::new(Some("Credential does not exist!".to_string()), None, AppErrorType::NotFoundError),
+                _ => AppError::new(None, Some(error.to_string()), AppErrorType::DBError),
+            }
+        })?;
+        
+    let is_correct = util::verify_password(&user_credential.password, &previous_password).await?;
+
+    if !is_correct {
+        return Err(AppError::new(Some("Credential do match!".to_string()), None, AppErrorType::BadRequestError))
+    }
+
+    state.context.user_credentials.update(&user_id, &user_credential_id, &UpdateUserCredential{previous_password, password}).await
         .map(|_| HttpResponse::Ok().json(AppResponse { message: "Successfully updated!" }))
         .map_err(|error| {
             error!(state.log, "Error occured: {:?}", error); 

@@ -185,7 +185,7 @@ pub async fn update_return_error_when_user_id_does_not_exist(pool: Pool<sqlx::Po
     assert!(result.is_err());
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("user", "user_credential")))]
 pub async fn delete_by_id_returns_rows_affected_eq_one_when_id_exists(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 

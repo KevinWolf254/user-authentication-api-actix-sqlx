@@ -1,4 +1,5 @@
 use std::{sync::{Mutex, Arc}, env};
+use argon2::Config;
 
 use actix_web::web::{self, Data};
 use bulk_sms_api::{dao::Database, AppState, configure_log, DEFAULT_LOG_PATH};
@@ -21,9 +22,12 @@ pub async fn init_app_state(pool: Pool<sqlx::Postgres>) -> Data<AppState<'static
 
     let db_context = Database::test(pool).await;
 
+    let config = Config::default();
+
     web::Data::new(AppState {
         connections: Mutex::new(0),
         context: Arc::new(db_context),
-        log: Arc::new(log.clone())
+        log: Arc::new(log.clone()),
+        argon_config: Arc::new(config),
     })
 }

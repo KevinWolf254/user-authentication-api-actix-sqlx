@@ -1,5 +1,5 @@
-use actix_web::{test, App, http};
-use bulk_sms_api::{handler, entity::user::User, error::AppResponseError, dto::{app_response::AppResponse, pagination::PaginatedResult, user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}}};
+use actix_web::{http, test, App};
+use bulk_sms_api::{dto::{app_response::AppResponse, pagination::PaginatedResult, user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}}, entity::{user::User, user_credential::UserCredential}, error::AppResponseError, handler, util};
 use sqlx::Pool;
 use serde_json::json;
 
@@ -411,10 +411,19 @@ pub async fn create_user_credential_returns_error_when_user_does_not_exist(pool:
     assert_eq!(response.error, "User with id 1 could not be found!");
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user", "user_credential")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
 pub async fn update_user_credential_returns_ok(pool: Pool<sqlx::Postgres>) {
-    let app_state = init_app_state(pool).await;
-    
+    // given
+    let app_state = init_app_state(pool.clone()).await;
+
+    let hashed_password = util::hash_password(&"previous_password".to_string(), &app_state.argon_config).await.unwrap();
+
+    sqlx::query_as!(UserCredential, 
+        r#"INSERT INTO "SMS_GATEWAY_USER"."USER_CREDENTIAL" (username, password, user_id) VALUES ($1, $2, $3) RETURNING * "#, 
+        "Smith", &hashed_password, 1)
+        .fetch_one(&pool) 
+        .await.unwrap();
+        
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -422,8 +431,8 @@ pub async fn update_user_credential_returns_ok(pool: Pool<sqlx::Postgres>) {
     )
     .await;
 
-    // given
     let body = UpdateUserCredential {
+        previous_password: "previous_password".to_string(),
         password: "newpassword".to_string(),
     };
 
@@ -447,6 +456,7 @@ pub async fn update_user_credential_returns_ok(pool: Pool<sqlx::Postgres>) {
     dbg!(":?", &response);
 
     assert_eq!(response.message, "Successfully updated!");
+    // assert!(util::verify_password(&update_user.password, &"newpassword".to_string()).await.unwrap());
 }
 
 #[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
@@ -462,6 +472,7 @@ pub async fn update_user_credential_returns_error_when_credential_does_not_exist
 
     // given
     let body = UpdateUserCredential {
+        previous_password: "previous_password".to_string(),
         password: "newpassword".to_string(),
     };
 
@@ -500,6 +511,7 @@ pub async fn update_user_credential_returns_error_when_user_and_credential_do_no
 
     // given
     let body = UpdateUserCredential {
+        previous_password: "previous_password".to_string(),
         password: "newpassword".to_string(),
     };
 

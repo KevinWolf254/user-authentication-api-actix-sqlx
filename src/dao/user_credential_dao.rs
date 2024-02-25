@@ -15,12 +15,19 @@ impl<'c> Table<'c, UserCredential> {
     }
 
     pub async fn update(&self, user_id: &i32, user_credential_id: &i32, request: &UpdateUserCredential) -> Result<UserCredential, sqlx::Error> {
-        let UpdateUserCredential { password } = request;
+        let UpdateUserCredential { previous_password: _, password } = request;
 
         sqlx::query_as!(UserCredential, 
             r#"UPDATE "SMS_GATEWAY_USER"."USER_CREDENTIAL" SET password = $1 WHERE user_credential_id = $2 AND user_id = $3 RETURNING * "#, 
             password, user_credential_id, user_id)
             .fetch_one(&*self.pool) 
+            .await
+    }
+
+    pub async fn find_by_user_id(&self, user_id: &i32) -> Result<UserCredential, sqlx::Error> {
+        sqlx::query_as!(UserCredential, 
+            r#"SELECT * FROM "SMS_GATEWAY_USER"."USER_CREDENTIAL" WHERE user_id = $1 "#, user_id)
+            .fetch_one(&*self.pool)
             .await
     }
 }

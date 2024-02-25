@@ -6,6 +6,9 @@ use slog::{info, warn};
 use std::env;
 use std::net::Ipv4Addr;
 use std::sync::{Arc, Mutex};
+use argon2::Config;
+
+extern crate argon2;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -41,7 +44,9 @@ async fn main() -> std::io::Result<()> {
             warn!(log, "MAX_CONNECTIONS was not of type u32. Will default to {}", DEFAULT_MAX_CONNECTIONS);
             DEFAULT_MAX_CONNECTIONS
         });
-
+        
+    let config = Config::default();
+    
     let localhost = Ipv4Addr::new(127, 0, 0, 1);
     
     info!(log, "Starting server at http://{:?}:{}", localhost, server_port);
@@ -51,7 +56,8 @@ async fn main() -> std::io::Result<()> {
     let app_state = web::Data::new(AppState {
         connections: Mutex::new(0),
         context: Arc::new(db_context),
-        log: Arc::new(log.clone())
+        log: Arc::new(log.clone()),
+        argon_config: Arc::new(config),
     });
 
     let server = HttpServer::new(move || {

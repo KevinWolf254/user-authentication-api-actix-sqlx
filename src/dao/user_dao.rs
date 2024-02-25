@@ -71,6 +71,11 @@ impl<'c> Table<'c, User> {
 
     pub async fn delete(&self, user_id: &i32) -> Result<PgQueryResult, sqlx::Error> {
         sqlx::query_as!(PgQueryResult, 
+            r#"DELETE FROM "SMS_GATEWAY_USER"."USER_CREDENTIAL" WHERE user_id = $1 "#, user_id)
+            .execute(&*self.pool)
+            .await?;
+
+        sqlx::query_as!(PgQueryResult, 
             r#"DELETE FROM "SMS_GATEWAY_USER"."USER" WHERE user_id = $1 "#, user_id)
             .execute(&*self.pool)
             .await

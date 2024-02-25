@@ -13,5 +13,7 @@ pub struct CreateUserCredential {
 #[derive(Deserialize, Serialize, Validate)]
 pub struct UpdateUserCredential {
     #[validate(length(min = 3, message = "Password is required!"))]
+    pub previous_password: String,
+    #[validate(length(min = 3, message = "Password is required!"))]
     pub password: String,
 }
