@@ -1,5 +1,5 @@
 use actix_web::{http, test, App};
-use bulk_sms_api::{dto::{app_response::AppResponse, pagination::PaginatedResult, user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}}, entity::{user::User, user_credential::UserCredential}, error::AppResponseError, handler, util};
+use bulk_sms_api::{dto::{app_response::AppResponse, pagination::PaginatedResult, user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}}, entity::{role::Role, user::User, user_credential::UserCredential}, error::AppResponseError, handler, util};
 use sqlx::Pool;
 use serde_json::json;
 
@@ -535,4 +535,56 @@ pub async fn update_user_credential_returns_error_when_user_and_credential_do_no
     dbg!(":?", &response);
 
     assert_eq!(response.error, "Credential does not exist!");
+}
+
+#[sqlx::test(fixtures(path = "../fixtures", scripts("user", "role", "user_role")))]
+pub async fn get_user_roles_returns_ok(pool: Pool<sqlx::Postgres>) {
+    let app_state = init_app_state(pool).await;
+    
+    let mut app = test::init_service(
+        App::new()
+            .app_data(app_state.clone())
+            .configure(handler::init_user_handler),
+    )
+    .await;
+    // given
+    // when
+    let request = test::TestRequest::get().uri("/users/1/roles").to_request();
+
+    let response = test::call_service(&mut app, request).await;
+
+    // then
+    assert_eq!(response.status(), http::StatusCode::OK);
+
+    let body = test::read_body(response).await;
+
+    let result: Vec<Role> = serde_json::from_slice(&body).expect("Failed to deserialize error");
+
+    assert_eq!(result.len(), 1);
+}
+
+#[sqlx::test]
+pub async fn get_user_role_returns_not_found_when_user_id_does_not_exist(pool: Pool<sqlx::Postgres>) {
+    let app_state = init_app_state(pool).await;
+    
+    let mut app = test::init_service(
+        App::new()
+            .app_data(app_state.clone())
+            .configure(handler::init_user_handler),
+    )
+    .await;
+    // given
+    // when
+    let request = test::TestRequest::get().uri("/users/101/roles").to_request();
+
+    let response = test::call_service(&mut app, request).await;
+
+    // then
+    assert_eq!(response.status(), http::StatusCode::NOT_FOUND);
+
+    let body = test::read_body(response).await;
+
+    let error: AppResponseError = serde_json::from_slice(&body).expect("Failed to deserialize error");
+
+    assert_eq!(error.error, "User with id 101 could not be found!");
 }

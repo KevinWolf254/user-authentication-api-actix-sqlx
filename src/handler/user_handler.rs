@@ -13,6 +13,7 @@ pub fn init(cfg: &mut ServiceConfig) {
     cfg.service(delete_user_with_id);
     cfg.service(create_user_credential);
     cfg.service(update_user_credential);
+    cfg.service(get_user_roles);
 }
 
 #[get("users/{user_id}")]
@@ -150,5 +151,19 @@ pub async fn delete_user_with_id(state: Data<AppState<'_>>, path: Path<i32>) -> 
         .map_err(|error| {
             error!(state.log, "Error occured: {:?}", error); 
             AppError::new(None, Some(error.to_string()), AppErrorType::DBError)
+        })
+}
+
+#[get("users/{user_id}/roles")]
+pub async fn get_user_roles(state: Data<AppState<'_>>, path: Path<i32>) -> Result<HttpResponse , AppError> {
+    let user_id = path.into_inner();
+    state.context.user_role.find_user_roles(&user_id).await
+        .map(|roles| HttpResponse::Ok().json(roles))
+        .map_err(|error| {
+            error!(state.log, "Error occured: {:?}", error); 
+            match error {
+                sqlx::Error::RowNotFound => AppError::new(Some(format!("User with id {} could not be found!", user_id)), None, AppErrorType::NotFoundError),
+                _  => AppError::new(None, Some(error.to_string()), AppErrorType::DBError)
+            }
         })
 }
