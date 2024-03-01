@@ -22,6 +22,7 @@ sqlx migrate add -r create_role_table
 sqlx migrate add -r create_role_permission_table
 sqlx migrate add -r create_user_table
 sqlx migrate add -r create_user_credential_table
+sqlx migrate add -r create_user_role_table
 ```
 
 4. Add script to create tables

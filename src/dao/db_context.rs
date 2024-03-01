@@ -60,6 +60,7 @@ pub struct Database<'c> {
     pub role_permissions: Arc<JoinTable<'c, Role, Permission>>,
     pub users: Arc<Table<'c, User>>,  
     pub user_credentials: Arc<Table<'c, UserCredential>>,  
+    pub user_role: Arc<JoinTable<'c, User, Role>>,
 }
 
 impl<'a> Database<'a> {
@@ -78,6 +79,7 @@ impl<'a> Database<'a> {
             role_permissions: Arc::from(JoinTable::new(pool.clone())),
             users: Arc::from(Table::new(pool.clone())),
             user_credentials: Arc::from(Table::new(pool.clone())),
+            user_role: Arc::from(JoinTable::new(pool.clone())),
         }
     }
 
@@ -88,6 +90,7 @@ impl<'a> Database<'a> {
             role_permissions: Arc::from(JoinTable::new(Arc::new(pool.clone()))),
             users: Arc::from(Table::new(Arc::new(pool.clone()))),
             user_credentials: Arc::from(Table::new(Arc::new(pool.clone()))),
+            user_role: Arc::from(JoinTable::new(Arc::new(pool.clone()))),
         }
     }
 }

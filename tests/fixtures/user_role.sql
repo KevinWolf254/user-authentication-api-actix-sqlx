@@ -1,0 +1,1 @@
+INSERT INTO "SMS_GATEWAY_USER"."USER_ROLE"(user_id, role_id) VALUES (1, 1);
