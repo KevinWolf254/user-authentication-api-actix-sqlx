@@ -1,5 +1,5 @@
 use actix_web::{test, App, http};
-use bulk_sms_api::{handler, entity::permission::{CreatePermission, Permission}, error::AppResponseError, dto::app_response::AppResponse};
+use bulk_sms_api::{handler, entity::permission::{CreatePermission, Permission}, error::AppResponseError, model::app_response::AppResponse};
 use sqlx::Pool;
 use serde_json::json;
 

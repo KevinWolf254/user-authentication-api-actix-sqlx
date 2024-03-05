@@ -1,4 +1,4 @@
-use bulk_sms_api::{dao::Database, dto::user_credentials::{CreateUserCredential, UpdateUserCredential}};
+use bulk_sms_api::{dao::Database, model::user_credentials::{CreateUserCredential, UpdateUserCredential}};
 use sqlx::Pool;
 
 #[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]

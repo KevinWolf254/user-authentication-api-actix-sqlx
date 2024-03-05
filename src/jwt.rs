@@ -1,0 +1,45 @@
+use chrono::{Duration, Utc};
+use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
+
+use crate::{entity::{role::Role, user::User}, error::{AppError, AppErrorType}, model::{claims::Claims, jwt_config::JwtConfig}};
+
+pub async fn generate_token(user: &User, user_roles: Vec<Role>, config: &JwtConfig) -> Result<String , AppError> {
+    let now = Utc::now();
+    let iat = now.timestamp() as usize;
+    let exp = (now + Duration::minutes(config.expires_in)).timestamp() as usize;
+
+    let claims: Claims = Claims {
+        sub: user.email_address.to_string(),
+        roles: user_roles,
+        exp,
+        iat,
+    };
+
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(config.secret.as_ref()),
+    )
+    .map_err(|e| {
+        AppError::new(None, Some(e.to_string()), AppErrorType::UnAuthorisedError)
+    })
+}
+
+pub async fn validate_token(token: &String, config: &JwtConfig) -> Result<Claims, AppError> {
+    decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(config.secret.as_ref()),
+        &Validation::default(),
+    )
+    .map(|r| r.claims)
+    .map_err(|e| {
+        AppError::new(None, Some(e.to_string()), AppErrorType::UnAuthorisedError)
+    })
+}
+
+
+#[cfg(test)]
+mod jwt_tests {
+    // use super::*;
+
+}

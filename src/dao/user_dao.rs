@@ -1,6 +1,6 @@
 use sqlx::postgres::PgQueryResult;
 
-use crate::{entity::user::User, dto::{pagination::PaginatedResult, user::{CreateUser, UpdateUser}}};
+use crate::{entity::user::User, model::{pagination::PaginatedResult, user::{CreateUser, UpdateUser}}};
 
 use super::{Table, CountResult};
 
@@ -9,6 +9,13 @@ impl<'c> Table<'c, User> {
     pub async fn find_by_id(&self, user_id: &i32) -> Result<User, sqlx::Error> {
         sqlx::query_as!(User, 
             r#"SELECT * FROM "SMS_GATEWAY_USER"."USER" WHERE user_id = $1 "#, user_id)
+            .fetch_one(&*self.pool)
+            .await
+    }
+
+    pub async fn find_by_email_address(&self, email_address: &String) -> Result<User, sqlx::Error> {
+        sqlx::query_as!(User, 
+            r#"SELECT * FROM "SMS_GATEWAY_USER"."USER" WHERE email_address = $1 "#, email_address)
             .fetch_one(&*self.pool)
             .await
     }

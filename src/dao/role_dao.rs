@@ -1,6 +1,6 @@
 use sqlx::postgres::PgQueryResult;
 
-use crate::{entity::role::{Role, CreateRole}, dto::pagination::PaginatedResult};
+use crate::{entity::role::{Role, CreateRole}, model::pagination::PaginatedResult};
 
 use super::{Table, CountResult};
 

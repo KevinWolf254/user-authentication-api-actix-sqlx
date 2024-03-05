@@ -1,7 +1,7 @@
 use actix_web::{ delete, get, post, put, web::{ Data, Path, ServiceConfig, Query }, HttpResponse };
 use slog::error;
 use sqlx::Error::RowNotFound;
-use crate::{ dto::{pagination::PaginationRequest, app_response::AppResponse, user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}}, error::{AppError, AppErrorType, AppResponseError}, util, AppState };
+use crate::{ model::{pagination::PaginationRequest, app_response::AppResponse, user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}}, error::{AppError, AppErrorType, AppResponseError}, util, AppState };
 use actix_web_validator::Json;
 
 pub fn init(cfg: &mut ServiceConfig) {
@@ -25,7 +25,7 @@ pub async fn get_user_by_id(state: Data<AppState<'_>>, path: Path<i32>) -> Resul
             error!(state.log, "Error occured: {:?}", error); 
             match error {
                 RowNotFound => AppError::new(Some(format!("User with id {} could not be found!", user_id)), None, AppErrorType::NotFoundError),
-                _  => AppError::new(None, Some(error.to_string()), AppErrorType::DBError)
+                _  => AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError)
             }
         })
 }
@@ -36,7 +36,7 @@ pub async fn get_users(state: Data<AppState<'_>>) -> Result<HttpResponse , AppEr
         .map(|users| HttpResponse::Ok().json(users))
         .map_err(|error| {
                     error!(state.log, "Error occured: {:?}", error); 
-                    AppError::new(None, Some(error.to_string()), AppErrorType::DBError)
+                    AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError)
         })
 }
 
@@ -46,7 +46,7 @@ pub async fn get_users_paginated(state: Data<AppState<'_>>, pagination: Query<Pa
         .map(|results| HttpResponse::Ok().json(results))
         .map_err(|e| {
             error!(state.log, "Error occured: {:?}", e); 
-            AppError::new(None, Some(e.to_string()), AppErrorType::DBError)
+            AppError::new(None, Some(e.to_string()), AppErrorType::InternalServerError)
         })
 }
 
@@ -60,7 +60,7 @@ pub async fn create_user(state: Data<AppState<'_>>, body: Json<CreateUser>) -> R
                 sqlx::Error::Database(d) if d.code().map_or(false, |code| code.eq("23505")) => {
                     AppError::new(Some("User already exists!".to_string()), None, AppErrorType::BadRequestError)
                 }
-                _ => AppError::new(None, Some(error.to_string()), AppErrorType::DBError),
+                _ => AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError),
             }
         })
 }
@@ -83,7 +83,7 @@ pub async fn create_user_credential(state: Data<AppState<'_>>, path: Path<i32>, 
                 sqlx::Error::Database(d) if d.code().map_or(false, |code| code.eq("23505")) => {
                     AppError::new(Some("Credential/username already exists!".to_string()), None, AppErrorType::BadRequestError)
                 }
-                _ => AppError::new(None, Some(error.to_string()), AppErrorType::DBError),
+                _ => AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError),
             }
         })
 }
@@ -101,7 +101,7 @@ pub async fn update_user_credential(state: Data<AppState<'_>>, path: Path<(i32, 
                     AppError::new(Some("Credential does not exist!".to_string()), None, AppErrorType::BadRequestError)
                 },
                 sqlx::Error::RowNotFound => AppError::new(Some("Credential does not exist!".to_string()), None, AppErrorType::NotFoundError),
-                _ => AppError::new(None, Some(error.to_string()), AppErrorType::DBError),
+                _ => AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError),
             }
         })?;
         
@@ -120,7 +120,7 @@ pub async fn update_user_credential(state: Data<AppState<'_>>, path: Path<(i32, 
                     AppError::new(Some("Credential does not exist!".to_string()), None, AppErrorType::BadRequestError)
                 },
                 sqlx::Error::RowNotFound => AppError::new(Some("Credential does not exist!".to_string()), None, AppErrorType::NotFoundError),
-                _ => AppError::new(None, Some(error.to_string()), AppErrorType::DBError),
+                _ => AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError),
             }
         })
 }
@@ -150,7 +150,7 @@ pub async fn delete_user_with_id(state: Data<AppState<'_>>, path: Path<i32>) -> 
         })
         .map_err(|error| {
             error!(state.log, "Error occured: {:?}", error); 
-            AppError::new(None, Some(error.to_string()), AppErrorType::DBError)
+            AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError)
         })
 }
 
@@ -163,7 +163,7 @@ pub async fn get_user_roles(state: Data<AppState<'_>>, path: Path<i32>) -> Resul
             error!(state.log, "Error occured: {:?}", error); 
             match error {
                 sqlx::Error::RowNotFound => AppError::new(Some(format!("User with id {} could not be found!", user_id)), None, AppErrorType::NotFoundError),
-                _  => AppError::new(None, Some(error.to_string()), AppErrorType::DBError)
+                _  => AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError)
             }
         })
 }

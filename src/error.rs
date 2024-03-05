@@ -26,9 +26,10 @@ impl AppError {
 
 #[derive(Debug)]
 pub enum AppErrorType {
-    DBError,
     NotFoundError,
     BadRequestError,
+    UnAuthorisedError,
+    InternalServerError,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -47,7 +48,8 @@ impl ResponseError for AppError {
         match self.error_type {
             AppErrorType::NotFoundError => StatusCode::NOT_FOUND,
             AppErrorType::BadRequestError => StatusCode::BAD_REQUEST,
-            AppErrorType::DBError => StatusCode::INTERNAL_SERVER_ERROR,
+            AppErrorType::UnAuthorisedError => StatusCode::UNAUTHORIZED,
+            AppErrorType::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 

@@ -11,6 +11,7 @@ pub struct CreateUserCredential {
 }
 
 #[derive(Deserialize, Serialize, Validate)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateUserCredential {
     #[validate(length(min = 3, message = "Password is required!"))]
     pub previous_password: String,

@@ -1,4 +1,4 @@
-use crate::{entity::user_credential::UserCredential, dto::user_credentials::{CreateUserCredential, UpdateUserCredential}};
+use crate::{entity::user_credential::UserCredential, model::user_credentials::{CreateUserCredential, UpdateUserCredential}};
 
 use super::Table;
 

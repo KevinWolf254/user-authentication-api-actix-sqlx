@@ -1,7 +1,7 @@
 use actix_web::{ delete, get, post, web::{ Data, Path, ServiceConfig, Query, Json }, HttpResponse };
 use slog::error;
 
-use crate::{AppState, error::{AppError, AppErrorType, AppResponseError}, dto::{pagination::PaginationRequest, app_response::AppResponse}, entity::role::CreateRole};
+use crate::{AppState, error::{AppError, AppErrorType, AppResponseError}, model::{pagination::PaginationRequest, app_response::AppResponse}, entity::role::CreateRole};
 
 pub fn init(cfg: &mut ServiceConfig) {
     cfg.service(get_roles);
@@ -18,7 +18,7 @@ pub async fn get_roles(state: Data<AppState<'_>>) -> Result<HttpResponse, AppErr
         Ok(roles) => Ok(HttpResponse::Ok().json(roles)),
         Err(error) => {
             error!(state.log, "Error occured: {:?}", error); 
-            Err(AppError::new(None, Some(error.to_string()), AppErrorType::DBError))             
+            Err(AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError))             
         },
     }
 }
@@ -29,7 +29,7 @@ pub async fn get_roles_paginated(state: Data<AppState<'_>>, pagination: Query<Pa
         .map(|results| HttpResponse::Ok().json(results))
         .map_err(|e| {
             error!(state.log, "Error occured: {:?}", e); 
-            AppError::new(None, Some(e.to_string()), AppErrorType::DBError)
+            AppError::new(None, Some(e.to_string()), AppErrorType::InternalServerError)
         })
 }
 
@@ -42,7 +42,7 @@ pub async fn get_role_by_id(state: Data<AppState<'_>>, path: Path<i16>) -> Resul
             error!(state.log, "Error occured: {:?}", error); 
             match error {
                 sqlx::Error::RowNotFound => AppError::new(Some(format!("Role with id {} could not be found!", role_id)), None, AppErrorType::NotFoundError),
-                _  => AppError::new(None, Some(error.to_string()), AppErrorType::DBError)
+                _  => AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError)
             }
         })
 }
@@ -57,7 +57,7 @@ pub async fn create_role(state: Data<AppState<'_>>, body: Json<CreateRole>) -> R
                 sqlx::Error::Database(d) if d.code().map_or(false, |code| code.eq("23505")) => {
                     AppError::new(Some("Role already exists!".to_string()), None, AppErrorType::BadRequestError)
                 }
-                _ => AppError::new(None, Some(error.to_string()), AppErrorType::DBError),
+                _ => AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError),
             }
         })
 }
@@ -76,7 +76,7 @@ pub async fn delete_role_with_id(state: Data<AppState<'_>>, path: Path<i16>) -> 
         })
         .map_err(|error| {
             error!(state.log, "Error occured: {:?}", error); 
-            AppError::new(None, Some(error.to_string()), AppErrorType::DBError)
+            AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError)
         })
 }
 
@@ -89,7 +89,7 @@ pub async fn get_role_permissions(state: Data<AppState<'_>>, path: Path<i16>) ->
             error!(state.log, "Error occured: {:?}", error); 
             match error {
                 sqlx::Error::RowNotFound => AppError::new(Some(format!("Role with id {} could not be found!", role_id)), None, AppErrorType::NotFoundError),
-                _  => AppError::new(None, Some(error.to_string()), AppErrorType::DBError)
+                _  => AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError)
             }
         })
 }

@@ -7,12 +7,12 @@ use crate::error::{AppError, AppErrorType};
 pub async fn hash_password(plain_password: &String, config: &Config<'_>) -> Result<String , AppError> {
     let salt = generate_salt().await;
     argon2::hash_encoded(plain_password.as_bytes(), &salt, config)
-        .map_err(|_| AppError::new(None, Some(String::from("Could not encode password!")), AppErrorType::DBError))
+        .map_err(|_| AppError::new(None, Some(String::from("Could not encode password!")), AppErrorType::InternalServerError))
 }
 
 pub async fn verify_password(hash: &String, password: &String) -> Result<bool , AppError> {
     argon2::verify_encoded(hash, password.as_bytes())
-    .map_err(|_| AppError::new(None, Some(String::from("Could not decode password!")), AppErrorType::DBError))
+    .map_err(|_| AppError::new(None, Some(String::from("Could not decode password!")), AppErrorType::InternalServerError))
 }
 
 async fn generate_salt() -> [u8; 16] {

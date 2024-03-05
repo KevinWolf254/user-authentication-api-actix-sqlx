@@ -1,6 +1,6 @@
 use sqlx::postgres::PgQueryResult;
 
-use crate::{entity::permission::{Permission, CreatePermission}, dto::pagination::PaginatedResult};
+use crate::{entity::permission::{Permission, CreatePermission}, model::pagination::PaginatedResult};
 
 use super::{Table, CountResult};
 
