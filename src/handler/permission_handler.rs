@@ -1,5 +1,5 @@
 use actix_web::{ delete, get, post, web::{ Data, Path, ServiceConfig, Query }, HttpResponse };
-use slog::error;
+use log::error;
 use sqlx::Error::RowNotFound;
 use crate::{ AppState, entity::permission::CreatePermission, error::{AppError, AppErrorType, AppResponseError}, model::{pagination::PaginationRequest, app_response::AppResponse} };
 use actix_web_validator::Json;
@@ -17,7 +17,7 @@ pub async fn get_permissions(state: Data<AppState<'_>>) -> Result<HttpResponse ,
     match state.context.permissions.find_all().await {
         Ok(permissions) => Ok(HttpResponse::Ok().json(permissions)),
         Err(error) => {
-            error!(state.log, "Error occured: {:?}", error); 
+            error!("Error occured: {:?}", error); 
             Err(AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError))             
         },
     }
@@ -28,7 +28,7 @@ pub async fn get_permissions_paginated(state: Data<AppState<'_>>, pagination: Qu
     state.context.permissions.find_paginated(pagination.page, pagination.page_size).await
         .map(|results| HttpResponse::Ok().json(results))
         .map_err(|e| {
-            error!(state.log, "Error occured: {:?}", e); 
+            error!("Error occured: {:?}", e); 
             AppError::new(None, Some(e.to_string()), AppErrorType::InternalServerError)
         })
 }
@@ -39,7 +39,7 @@ pub async fn get_permission_by_id(state: Data<AppState<'_>>, path: Path<i16>) ->
     state.context.permissions.find_by_id(&permission_id).await
         .map(|permission| HttpResponse::Ok().json(permission))
         .map_err(|error| {
-            error!(state.log, "Error occured: {:?}", error); 
+            error!("Error occured: {:?}", error); 
             match error {
                 RowNotFound => AppError::new(Some(format!("Permission with id {} could not be found!", permission_id)), None, AppErrorType::NotFoundError),
                 _  => AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError)
@@ -52,7 +52,7 @@ pub async fn create_permission(state: Data<AppState<'_>>, body: Json<CreatePermi
     state.context.permissions.create(&body.into_inner()).await
         .map(|permission| HttpResponse::Created().json(permission))
         .map_err(|error| {
-            error!(state.log, "Error occured: {:?}", error); 
+            error!("Error occured: {:?}", error); 
             match &error {
                 sqlx::Error::Database(d) if d.code().map_or(false, |code| code.eq("23505")) => {
                     AppError::new(Some("Permission already exists!".to_string()), None, AppErrorType::BadRequestError)
@@ -75,7 +75,7 @@ pub async fn delete_permission_with_id(state: Data<AppState<'_>>, path: Path<i16
             }
         })
         .map_err(|error| {
-            error!(state.log, "Error occured: {:?}", error); 
+            error!("Error occured: {:?}", error); 
             AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError)
         })
 }

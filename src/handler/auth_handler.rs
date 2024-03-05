@@ -1,5 +1,5 @@
 use actix_web::{post, web::{Data, Json, ServiceConfig}, HttpResponse};
-use slog::error;
+use log::error;
 
 use crate::{error::{AppError, AppErrorType}, jwt, model::{sign_in::SignIn, token_response::TokenResponse}, util, AppState};
 
@@ -13,7 +13,7 @@ pub async fn sign_in(state: Data<AppState<'_>>, body: Json<SignIn>) -> Result<Ht
 
     let user = state.context.users.find_by_email_address(&email_address).await
     .map_err(|error| {
-        error!(state.log, "Error occured: {:?}", error); 
+        error!("Error occured: {:?}", error); 
         match error {
             sqlx::Error::RowNotFound => AppError::new(Some("Invalid email address/password!".to_string()), None, AppErrorType::UnAuthorisedError),
             _  => AppError::new(None, Some("Service unavailable try again later!".to_string()), AppErrorType::InternalServerError)
@@ -22,7 +22,7 @@ pub async fn sign_in(state: Data<AppState<'_>>, body: Json<SignIn>) -> Result<Ht
 
     let user_credentials = state.context.user_credentials.find_by_user_id(&user.user_id).await
     .map_err(|error| {
-        error!(state.log, "Error occured: {:?}", error); 
+        error!("Error occured: {:?}", error); 
         match &error {
             sqlx::Error::Database(d) if d.code().map_or(false, |code| code.eq("23503")) => {
                 AppError::new(Some("Invalid email address/password!".to_string()), None, AppErrorType::UnAuthorisedError)
@@ -34,7 +34,7 @@ pub async fn sign_in(state: Data<AppState<'_>>, body: Json<SignIn>) -> Result<Ht
 
     let user_roles = state.context.user_role.find_user_roles(&user.user_id).await
     .map_err(|error| {
-        error!(state.log, "Error occured: {:?}", error); 
+        error!("Error occured: {:?}", error); 
         AppError::new(None, Some("Service unavailable try again later!".to_string()), AppErrorType::InternalServerError)
     })?;
 

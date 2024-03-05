@@ -1,9 +1,9 @@
 use actix_web::{ web, App, HttpServer };
 use bulk_sms_api::model::jwt_config::JwtConfig;
-use bulk_sms_api::{AppState, handler, configure_log, DEFAULT_LOG_PATH};
+use bulk_sms_api::{AppState, handler};
 use bulk_sms_api::dao::Database;
 use dotenvy::dotenv;
-use slog::{info, warn};
+use log::{info, warn};
 use std::env;
 use std::net::Ipv4Addr;
 use std::sync::{Arc, Mutex};
@@ -18,18 +18,16 @@ async fn main() -> std::io::Result<()> {
     const DEFAULT_SERVER_PORT: u16 = 8080;
     const DEFAULT_MAX_CONNECTIONS: u32 = 5;
 
-    let log_path = env::var("LOG_PATH").unwrap_or_else(|_| DEFAULT_LOG_PATH.to_string());
-
-    let log = configure_log(log_path);
+    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
 
     let server_port = env::var("SERVER_PORT")
         .unwrap_or_else(|_| {
-            warn!(log, "SERVER_PORT env variable was not provided. Will default to {}", DEFAULT_SERVER_PORT);
+            warn!("SERVER_PORT env variable was not provided. Will default to {}", DEFAULT_SERVER_PORT);
             DEFAULT_SERVER_PORT.to_string()
         })
         .parse()
         .unwrap_or_else(|_| {
-            warn!(log, "SERVER_PORT was not of type u16. Will default to {}", DEFAULT_SERVER_PORT);
+            warn!("SERVER_PORT was not of type u16. Will default to {}", DEFAULT_SERVER_PORT);
             DEFAULT_SERVER_PORT
         });
 
@@ -37,12 +35,12 @@ async fn main() -> std::io::Result<()> {
 
     let max_connections = env::var("MAX_CONNECTIONS")
         .unwrap_or_else(|_| {
-            warn!(log, "MAX_CONNECTIONS env variable was not provided. Will default to {}", DEFAULT_MAX_CONNECTIONS);
+            warn!("MAX_CONNECTIONS env variable was not provided. Will default to {}", DEFAULT_MAX_CONNECTIONS);
             DEFAULT_MAX_CONNECTIONS.to_string()
         }) // Default to 5 if not present
         .parse()
         .unwrap_or_else(|_| {
-            warn!(log, "MAX_CONNECTIONS was not of type u32. Will default to {}", DEFAULT_MAX_CONNECTIONS);
+            warn!("MAX_CONNECTIONS was not of type u32. Will default to {}", DEFAULT_MAX_CONNECTIONS);
             DEFAULT_MAX_CONNECTIONS
         });
         
@@ -50,7 +48,7 @@ async fn main() -> std::io::Result<()> {
     
     let localhost = Ipv4Addr::new(127, 0, 0, 1);
     
-    info!(log, "Starting server at http://{:?}:{}", localhost, server_port);
+    info!("Starting server at http://{:?}:{}", localhost, server_port);
 
     let db_context = Database::new(&database_url, max_connections).await;
 
@@ -62,13 +60,13 @@ async fn main() -> std::io::Result<()> {
     let app_state = web::Data::new(AppState {
         connections: Mutex::new(0),
         context: Arc::new(db_context),
-        log: Arc::new(log.clone()),
         argon_config: Arc::new(config),
         jwt_config: Arc::new(jwt_config)
     });
 
     let server = HttpServer::new(move || {
         App::new()
+            .wrap(actix_web::middleware::Logger::default())
             .app_data(app_state.clone())
             .service(
                 web
@@ -84,14 +82,14 @@ async fn main() -> std::io::Result<()> {
             )
     }).bind((localhost, server_port))
     .and_then(|result| {
-        info!(log, "Successfully started the server");
+        info!("Successfully started the server");
         Ok(result)
     })?;
 
     // Run the server
     server.run().await
     .and_then(|_| {
-        info!(log, "Stopped the server");
+        info!("Stopped the server");
         Ok(())
     })?;
 

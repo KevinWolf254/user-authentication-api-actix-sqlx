@@ -1,5 +1,5 @@
 use actix_web::{ delete, get, post, put, web::{ Data, Path, ServiceConfig, Query }, HttpResponse };
-use slog::error;
+use log::error;
 use sqlx::Error::RowNotFound;
 use crate::{ model::{pagination::PaginationRequest, app_response::AppResponse, user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}}, error::{AppError, AppErrorType, AppResponseError}, util, AppState };
 use actix_web_validator::Json;
@@ -22,7 +22,7 @@ pub async fn get_user_by_id(state: Data<AppState<'_>>, path: Path<i32>) -> Resul
     state.context.users.find_by_id(&user_id).await
         .map(|user| HttpResponse::Ok().json(user))
         .map_err(|error| {
-            error!(state.log, "Error occured: {:?}", error); 
+            error!("Error occured: {:?}", error); 
             match error {
                 RowNotFound => AppError::new(Some(format!("User with id {} could not be found!", user_id)), None, AppErrorType::NotFoundError),
                 _  => AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError)
@@ -35,7 +35,7 @@ pub async fn get_users(state: Data<AppState<'_>>) -> Result<HttpResponse , AppEr
     state.context.users.find_all().await
         .map(|users| HttpResponse::Ok().json(users))
         .map_err(|error| {
-                    error!(state.log, "Error occured: {:?}", error); 
+                    error!("Error occured: {:?}", error); 
                     AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError)
         })
 }
@@ -45,7 +45,7 @@ pub async fn get_users_paginated(state: Data<AppState<'_>>, pagination: Query<Pa
     state.context.users.find_paginated(pagination.page, pagination.page_size).await
         .map(|results| HttpResponse::Ok().json(results))
         .map_err(|e| {
-            error!(state.log, "Error occured: {:?}", e); 
+            error!("Error occured: {:?}", e); 
             AppError::new(None, Some(e.to_string()), AppErrorType::InternalServerError)
         })
 }
@@ -55,7 +55,7 @@ pub async fn create_user(state: Data<AppState<'_>>, body: Json<CreateUser>) -> R
     state.context.users.create(&body.into_inner()).await
         .map(|user| HttpResponse::Created().json(user))
         .map_err(|error| {
-            error!(state.log, "Error occured: {:?}", error); 
+            error!("Error occured: {:?}", error); 
             match &error {
                 sqlx::Error::Database(d) if d.code().map_or(false, |code| code.eq("23505")) => {
                     AppError::new(Some("User already exists!".to_string()), None, AppErrorType::BadRequestError)
@@ -75,7 +75,7 @@ pub async fn create_user_credential(state: Data<AppState<'_>>, path: Path<i32>, 
     state.context.user_credentials.create(&user_id, &CreateUserCredential{ username, password: hashed_password }).await
         .map(|_| HttpResponse::Created().json(AppResponse { message: "Successfully created!" }))
         .map_err(|error| {
-            error!(state.log, "Error occured: {:?}", error); 
+            error!("Error occured: {:?}", error); 
             match &error {
                 sqlx::Error::Database(d) if d.code().map_or(false, |code| code.eq("23503")) => {
                     AppError::new(Some(format!("User with id {} could not be found!", user_id)), None, AppErrorType::NotFoundError)
@@ -95,7 +95,7 @@ pub async fn update_user_credential(state: Data<AppState<'_>>, path: Path<(i32, 
 
     let user_credential = state.context.user_credentials.find_by_user_id(&user_id).await
         .map_err(|error| {
-            error!(state.log, "Error occured: {:?}", error); 
+            error!("Error occured: {:?}", error); 
             match &error {
                 sqlx::Error::Database(d) if d.code().map_or(false, |code| code.eq("23503")) => {
                     AppError::new(Some("Credential does not exist!".to_string()), None, AppErrorType::BadRequestError)
@@ -114,7 +114,7 @@ pub async fn update_user_credential(state: Data<AppState<'_>>, path: Path<(i32, 
     state.context.user_credentials.update(&user_id, &user_credential_id, &UpdateUserCredential{previous_password, password}).await
         .map(|_| HttpResponse::Ok().json(AppResponse { message: "Successfully updated!" }))
         .map_err(|error| {
-            error!(state.log, "Error occured: {:?}", error); 
+            error!("Error occured: {:?}", error); 
             match &error {
                 sqlx::Error::Database(d) if d.code().map_or(false, |code| code.eq("23503")) => {
                     AppError::new(Some("Credential does not exist!".to_string()), None, AppErrorType::BadRequestError)
@@ -131,7 +131,7 @@ pub async fn update_user(state: Data<AppState<'_>>, path: Path<i32>, body: Json<
     state.context.users.update(&user_id, &body.into_inner()).await
         .map(|user| HttpResponse::Ok().json(user))
         .map_err(|error| {
-            error!(state.log, "Error occured: {:?}", error); 
+            error!("Error occured: {:?}", error); 
             AppError::new(Some(format!("User with id {} could not be found!", user_id)), None, AppErrorType::NotFoundError)
         })
 }
@@ -149,7 +149,7 @@ pub async fn delete_user_with_id(state: Data<AppState<'_>>, path: Path<i32>) -> 
             }
         })
         .map_err(|error| {
-            error!(state.log, "Error occured: {:?}", error); 
+            error!("Error occured: {:?}", error); 
             AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError)
         })
 }
@@ -160,7 +160,7 @@ pub async fn get_user_roles(state: Data<AppState<'_>>, path: Path<i32>) -> Resul
     state.context.user_role.find_user_roles(&user_id).await
         .map(|roles| HttpResponse::Ok().json(roles))
         .map_err(|error| {
-            error!(state.log, "Error occured: {:?}", error); 
+            error!("Error occured: {:?}", error); 
             match error {
                 sqlx::Error::RowNotFound => AppError::new(Some(format!("User with id {} could not be found!", user_id)), None, AppErrorType::NotFoundError),
                 _  => AppError::new(None, Some(error.to_string()), AppErrorType::InternalServerError)

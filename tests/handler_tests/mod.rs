@@ -2,7 +2,7 @@ use std::{sync::{Mutex, Arc}, env};
 use argon2::Config;
 
 use actix_web::web::{self, Data};
-use bulk_sms_api::{configure_log, dao::Database, model::jwt_config::JwtConfig, AppState, DEFAULT_LOG_PATH};
+use bulk_sms_api::{dao::Database, model::jwt_config::JwtConfig, AppState};//configure_log,
 use dotenvy::dotenv;
 use sqlx::Pool;
 
@@ -18,10 +18,6 @@ mod auth_handler_test;
 pub async fn init_app_state(pool: Pool<sqlx::Postgres>) -> Data<AppState<'static>> {
     dotenv().ok();
 
-    let log_path = env::var("LOG_PATH").unwrap_or_else(|_| DEFAULT_LOG_PATH.to_string());
-
-    let log = configure_log(log_path);
-
     let db_context = Database::test(pool).await;
 
     let config = Config::default();
@@ -34,7 +30,6 @@ pub async fn init_app_state(pool: Pool<sqlx::Postgres>) -> Data<AppState<'static
     web::Data::new(AppState {
         connections: Mutex::new(0),
         context: Arc::new(db_context),
-        log: Arc::new(log.clone()),
         argon_config: Arc::new(config),
         jwt_config: Arc::new(jwt_config)
     })
