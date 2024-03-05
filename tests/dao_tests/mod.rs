@@ -16,6 +16,3 @@ mod user_dao_test;
 
 #[cfg(test)]
 mod user_credentials_dao_test;
-
-#[cfg(test)]
-mod user_role_dao_test;

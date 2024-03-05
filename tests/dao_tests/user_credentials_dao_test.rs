@@ -1,7 +1,7 @@
 use bulk_sms_api::{dao::Database, model::user_credentials::{CreateUserCredential, UpdateUserCredential}};
 use sqlx::Pool;
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn create_returns_a_user_credential(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 
@@ -45,7 +45,7 @@ pub async fn create_returns_error_when_user_id_does_not_exist(pool: Pool<sqlx::P
     assert!(result.is_err());
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user", "user_credential")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user", "user_credential")))]
 pub async fn create_returns_error_when_username_already_exists(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 
@@ -65,7 +65,7 @@ pub async fn create_returns_error_when_username_already_exists(pool: Pool<sqlx::
     assert!(result.is_err());
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user", "user_credential")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user", "user_credential")))]
 pub async fn create_returns_error_when_user_already_has_credential(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 
@@ -85,21 +85,12 @@ pub async fn create_returns_error_when_user_already_has_credential(pool: Pool<sq
     assert!(result.is_err());
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user", "user_credential")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user", "user_credential")))]
 pub async fn update_returns_a_user_credential(pool: Pool<sqlx::Postgres>) {
 
     // given 
     let previous_password = "previous_password";
-    // let config = Config::default();
-
-    // let hashed_password = util::hash_password(&previous_password.to_string(), &config).await.unwrap();
-
-    // sqlx::query_as!(UserCredential, 
-    //     r#"INSERT INTO "SMS_GATEWAY_USER"."USER_CREDENTIAL" (username, password, user_id) VALUES ($1, $2, $3) RETURNING * "#, 
-    //     "Smith", &hashed_password, 1)
-    //     .fetch_one(&pool) 
-    //     .await.unwrap();
-
+    
     let db = Database::test(pool).await;
 
     let user_id = 1;   

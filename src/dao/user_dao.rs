@@ -1,6 +1,6 @@
 use sqlx::postgres::PgQueryResult;
 
-use crate::{entity::user::User, model::{pagination::PaginatedResult, user::{CreateUser, UpdateUser}}};
+use crate::{entity::{role::Role, user::User}, model::{pagination::PaginatedResult, user::{CreateUser, UpdateUser}}};
 
 use super::{Table, CountResult};
 
@@ -55,11 +55,16 @@ impl<'c> Table<'c, User> {
     }
 
     pub async fn create(&self, request: &CreateUser) -> Result<User, sqlx::Error> {
-        let CreateUser { first_name, middle_name, surname, email_address, mobile_number } = request;
+        let CreateUser { first_name, middle_name, surname, email_address, mobile_number, role_id } = request;
+
+        sqlx::query_as!(Role, 
+            r#"SELECT * FROM "SMS_GATEWAY_USER"."ROLE" WHERE role_id = $1 "#, &role_id)
+            .fetch_one(&*self.pool)
+            .await?;
 
         sqlx::query_as!(User, 
-            r#"INSERT INTO "SMS_GATEWAY_USER"."USER" (first_name, middle_name, surname, email_address, mobile_number) VALUES ($1, $2, $3, $4, $5) RETURNING * "#, 
-            first_name, *middle_name, surname, email_address, *mobile_number)
+            r#"INSERT INTO "SMS_GATEWAY_USER"."USER" (first_name, middle_name, surname, email_address, mobile_number, role_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING * "#, 
+            first_name, *middle_name, surname, email_address, *mobile_number, role_id)
             .fetch_one(&*self.pool) 
             .await
     }
@@ -67,8 +72,13 @@ impl<'c> Table<'c, User> {
     pub async fn update(&self, user_id: &i32, request: &UpdateUser) -> Result<User, sqlx::Error> {
         self.find_by_id(user_id).await?;
 
-        let UpdateUser { first_name, middle_name, surname, mobile_number } = request;
+        let UpdateUser { first_name, middle_name, surname, mobile_number , role_id} = request;
 
+        sqlx::query_as!(Role, 
+            r#"SELECT * FROM "SMS_GATEWAY_USER"."ROLE" WHERE role_id = $1 "#, role_id)
+            .fetch_one(&*self.pool)
+            .await?;
+        
         sqlx::query_as!(User, 
             r#"UPDATE "SMS_GATEWAY_USER"."USER" SET first_name = $1, middle_name = $2, surname = $3, mobile_number = $4 WHERE user_id = $5 RETURNING * "#, 
             first_name, *middle_name, surname, *mobile_number, user_id)

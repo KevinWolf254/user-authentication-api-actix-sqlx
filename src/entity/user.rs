@@ -17,8 +17,8 @@ pub struct User {
     pub mobile_number: Option<String>,
     pub enabled: bool,
     pub email_confirmed: bool,
+    pub role_id: i16,
     pub created_at: DateTime<Utc>,
-    // pub organisation_id: u32,
 }
 
 impl<'c> FromRow<'c, PgRow> for User {
@@ -32,7 +32,8 @@ impl<'c> FromRow<'c, PgRow> for User {
             mobile_number: row.get(5),
             enabled: row.get(6),
             email_confirmed: row.get(7),
-            created_at: row.get(8),
+            role_id: row.get(8),
+            created_at: row.get(9),
         })
     }
 }

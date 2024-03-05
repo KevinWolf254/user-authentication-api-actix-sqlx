@@ -1,11 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-use crate::entity::role::Role;
+use crate::entity::{permission::Permission, role::Role, user::User};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: String,
-    pub roles: Vec<Role>,
+    pub user: User,
+    pub role: Role,
+    pub permissions: Vec<Permission>,
     pub iat: usize,
     pub exp: usize,
 }

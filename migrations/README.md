@@ -22,7 +22,6 @@ sqlx migrate add -r create_role_table
 sqlx migrate add -r create_role_permission_table
 sqlx migrate add -r create_user_table
 sqlx migrate add -r create_user_credential_table
-sqlx migrate add -r create_user_role_table
 ```
 
 4. Add script to create tables
@@ -71,7 +70,7 @@ Create the USER table:
 ```bash
 CREATE TABLE "SMS_GATEWAY_USER"."USER"
 (
-    user_id smallint NOT NULL,
+    user_id serial NOT NULL,
     first_name character varying(150) NOT NULL,
     middle_name character varying(150),
     surname character varying(150) NOT NULL,
@@ -79,9 +78,11 @@ CREATE TABLE "SMS_GATEWAY_USER"."USER"
     mobile_number character varying(150),
     enabled boolean NOT NULL DEFAULT FALSE,
     email_confirmed boolean NOT NULL DEFAULT FALSE,
+    role_id smallint NOT NULL,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_user_id PRIMARY KEY (user_id),
-    CONSTRAINT uq_user_email_address UNIQUE (email_address)
+    CONSTRAINT uq_user_email_address UNIQUE (email_address),
+    CONSTRAINT fk_user_role_id FOREIGN KEY (role_id) REFERENCES "SMS_GATEWAY_USER"."ROLE" (role_id)
 );
 ```
 

@@ -1,16 +1,18 @@
 use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
 
-use crate::{entity::{role::Role, user::User}, error::{AppError, AppErrorType}, model::{claims::Claims, jwt_config::JwtConfig}};
+use crate::{entity::{permission::Permission, role::Role, user::User}, error::{AppError, AppErrorType}, model::{claims::Claims, jwt_config::JwtConfig}};
 
-pub async fn generate_token(user: &User, user_roles: Vec<Role>, config: &JwtConfig) -> Result<String , AppError> {
+pub async fn generate_token(user: User, role: Role, permissions: Vec<Permission>, config: &JwtConfig) -> Result<String , AppError> {
     let now = Utc::now();
     let iat = now.timestamp() as usize;
     let exp = (now + Duration::minutes(config.expires_in)).timestamp() as usize;
 
     let claims: Claims = Claims {
         sub: user.email_address.to_string(),
-        roles: user_roles,
+        user,
+        role,
+        permissions,
         exp,
         iat,
     };

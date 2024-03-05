@@ -12,6 +12,7 @@ pub struct CreateUser {
     #[validate(email(message = "Email address is not valid!"))]
     pub email_address: String,
     pub mobile_number: Option<String>,
+    pub role_id: i16,
 }
 
 #[derive(Deserialize, Serialize, Validate)]
@@ -23,4 +24,5 @@ pub struct UpdateUser {
     #[validate(length(min = 3, message = "Surname is required!"))]
     pub surname: String,
     pub mobile_number: Option<String>,
+    pub role_id: i16,
 }

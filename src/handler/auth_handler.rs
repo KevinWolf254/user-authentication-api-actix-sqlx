@@ -32,7 +32,13 @@ pub async fn sign_in(state: Data<AppState<'_>>, body: Json<SignIn>) -> Result<Ht
         }
     })?;
 
-    let user_roles = state.context.user_role.find_user_roles(&user.user_id).await
+    let user_role = state.context.roles.find_by_id(&user.role_id).await
+    .map_err(|error| {
+        error!("Error occured: {:?}", error); 
+        AppError::new(None, Some("Service unavailable try again later!".to_string()), AppErrorType::InternalServerError)
+    })?;
+
+    let permissions = state.context.role_permissions.find_role_permissions(&user.role_id).await
     .map_err(|error| {
         error!("Error occured: {:?}", error); 
         AppError::new(None, Some("Service unavailable try again later!".to_string()), AppErrorType::InternalServerError)
@@ -43,7 +49,7 @@ pub async fn sign_in(state: Data<AppState<'_>>, body: Json<SignIn>) -> Result<Ht
     if !is_pass_correct {
         Err(AppError::new(None, Some("Invalid email address/password!".to_string()), AppErrorType::UnAuthorisedError))
     } else {
-        jwt::generate_token(&user, user_roles, &state.jwt_config).await
+        jwt::generate_token(user, user_role, permissions, &state.jwt_config).await
         .map(|token| HttpResponse::Ok().json(TokenResponse { token }))
     }
 

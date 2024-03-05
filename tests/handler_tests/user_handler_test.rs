@@ -1,11 +1,11 @@
 use actix_web::{http, test, App};
-use bulk_sms_api::{model::{app_response::AppResponse, pagination::PaginatedResult, user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}}, entity::{role::Role, user::User, user_credential::UserCredential}, error::AppResponseError, handler, util};
+use bulk_sms_api::{model::{app_response::AppResponse, pagination::PaginatedResult, user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}}, entity::{user::User, user_credential::UserCredential}, error::AppResponseError, handler, util};
 use sqlx::Pool;
 use serde_json::json;
 
 use crate::handler_tests::init_app_state;
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn get_user_by_id_returns_ok_when_id_exists(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
     
@@ -61,7 +61,7 @@ pub async fn get_user_by_id_returns_not_found_when_id_does_not_exist(pool: Pool<
     assert_eq!(response.error, "User with id 1 could not be found!".to_string());
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn get_users_returns_ok(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
     
@@ -84,7 +84,7 @@ pub async fn get_users_returns_ok(pool: Pool<sqlx::Postgres>) {
     assert_eq!(response.len(), 2);
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn get_users_paginated_returns_ok(pool: Pool<sqlx::Postgres>) {
     // given
     let app_state = init_app_state(pool).await;
@@ -115,8 +115,8 @@ pub async fn get_users_paginated_returns_ok(pool: Pool<sqlx::Postgres>) {
 
 }
 
-#[sqlx::test]
-pub async fn create_user_returns_ok_when_name_does_not_exist(pool: Pool<sqlx::Postgres>) {
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role")))]
+pub async fn create_user_returns_ok(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
     
     let mut app = test::init_service(
@@ -133,6 +133,7 @@ pub async fn create_user_returns_ok_when_name_does_not_exist(pool: Pool<sqlx::Po
         surname: "Doe".to_string(),
         email_address: "jsmith@test.com".to_string(),
         mobile_number: None,
+        role_id: 1
     };
 
     let payload = json!(body);
@@ -158,7 +159,7 @@ pub async fn create_user_returns_ok_when_name_does_not_exist(pool: Pool<sqlx::Po
     assert_eq!(user.mobile_number, None);
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn create_user_returns_bad_request_when_email_address_exists(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
     
@@ -176,6 +177,7 @@ pub async fn create_user_returns_bad_request_when_email_address_exists(pool: Poo
         surname: "Doe".to_string(),
         email_address: "jsmith@test.com".to_string(),
         mobile_number: None,
+        role_id: 1
     };
 
     let payload = json!(body);
@@ -196,7 +198,7 @@ pub async fn create_user_returns_bad_request_when_email_address_exists(pool: Poo
     assert_eq!(result.error, "User already exists!");
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn update_user_returns_ok(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
     
@@ -213,6 +215,7 @@ pub async fn update_user_returns_ok(pool: Pool<sqlx::Postgres>) {
         middle_name: Some("Pope".to_string()),
         surname: "Dope".to_string(),
         mobile_number: Some("0700000000".to_string()),
+        role_id: 1
     };
 
     let payload = json!(body);
@@ -254,6 +257,7 @@ pub async fn update_user_returns_not_found_when_id_does_not_exist(pool: Pool<sql
         middle_name: Some("Pope".to_string()),
         surname: "Dope".to_string(),
         mobile_number: Some("0700000000".to_string()),
+        role_id: 1
     };
 
     let payload = json!(body);
@@ -274,7 +278,7 @@ pub async fn update_user_returns_not_found_when_id_does_not_exist(pool: Pool<sql
     assert_eq!(response.error, "User with id 1 could not be found!");
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn delete_user_with_id_returns_ok_when_id_exists(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
 
@@ -300,7 +304,7 @@ pub async fn delete_user_with_id_returns_ok_when_id_exists(pool: Pool<sqlx::Post
     assert_eq!(result.message, "User deleted successfully.");
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn create_user_credential_returns_ok(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
     
@@ -337,7 +341,7 @@ pub async fn create_user_credential_returns_ok(pool: Pool<sqlx::Postgres>) {
     assert_eq!(response.message, "Successfully created!");
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user", "user_credential")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user", "user_credential")))]
 pub async fn create_user_credential_returns_error_when_username_already_exists(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
     
@@ -411,7 +415,7 @@ pub async fn create_user_credential_returns_error_when_user_does_not_exist(pool:
     assert_eq!(response.error, "User with id 1 could not be found!");
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn update_user_credential_returns_ok(pool: Pool<sqlx::Postgres>) {
     // given
     let app_state = init_app_state(pool.clone()).await;
@@ -459,7 +463,7 @@ pub async fn update_user_credential_returns_ok(pool: Pool<sqlx::Postgres>) {
     // assert!(util::verify_password(&update_user.password, &"newpassword".to_string()).await.unwrap());
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn update_user_credential_returns_error_when_credential_does_not_exist(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
     
@@ -535,56 +539,4 @@ pub async fn update_user_credential_returns_error_when_user_and_credential_do_no
     dbg!(":?", &response);
 
     assert_eq!(response.error, "Credential does not exist!");
-}
-
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user", "role", "user_role")))]
-pub async fn get_user_roles_returns_ok(pool: Pool<sqlx::Postgres>) {
-    let app_state = init_app_state(pool).await;
-    
-    let mut app = test::init_service(
-        App::new()
-            .app_data(app_state.clone())
-            .configure(handler::init_user_handler),
-    )
-    .await;
-    // given
-    // when
-    let request = test::TestRequest::get().uri("/users/1/roles").to_request();
-
-    let response = test::call_service(&mut app, request).await;
-
-    // then
-    assert_eq!(response.status(), http::StatusCode::OK);
-
-    let body = test::read_body(response).await;
-
-    let result: Vec<Role> = serde_json::from_slice(&body).expect("Failed to deserialize error");
-
-    assert_eq!(result.len(), 1);
-}
-
-#[sqlx::test]
-pub async fn get_user_role_returns_not_found_when_user_id_does_not_exist(pool: Pool<sqlx::Postgres>) {
-    let app_state = init_app_state(pool).await;
-    
-    let mut app = test::init_service(
-        App::new()
-            .app_data(app_state.clone())
-            .configure(handler::init_user_handler),
-    )
-    .await;
-    // given
-    // when
-    let request = test::TestRequest::get().uri("/users/101/roles").to_request();
-
-    let response = test::call_service(&mut app, request).await;
-
-    // then
-    assert_eq!(response.status(), http::StatusCode::NOT_FOUND);
-
-    let body = test::read_body(response).await;
-
-    let error: AppResponseError = serde_json::from_slice(&body).expect("Failed to deserialize error");
-
-    assert_eq!(error.error, "User with id 101 could not be found!");
 }

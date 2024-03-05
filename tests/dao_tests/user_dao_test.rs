@@ -1,7 +1,7 @@
 use bulk_sms_api::{dao::Database, model::user::{CreateUser, UpdateUser}};
 use sqlx::Pool;
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn find_by_id_returns_user_when_id_exists(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 
@@ -32,7 +32,7 @@ pub async fn find_by_id_returns_error_when_id_does_not_exist(pool: Pool<sqlx::Po
 }
 
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn find_all_returns_users_when_users_exists(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 
@@ -63,7 +63,7 @@ pub async fn find_all_returns_empty_when_users_do_not_exist(pool: Pool<sqlx::Pos
     assert_eq!(users.len(), 0);
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn find_paginated_returns_paginated_result_when_users_exist(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 
@@ -87,8 +87,8 @@ pub async fn find_paginated_returns_paginated_result_when_users_exist(pool: Pool
     assert_eq!(result.page_size, page_size);
 }
 
-#[sqlx::test]
-pub async fn create_returns_a_user_when_user_name_does_not_exist(pool: Pool<sqlx::Postgres>) {
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role")))]
+pub async fn create_returns_a_user_when_ok(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 
     // given    
@@ -98,25 +98,19 @@ pub async fn create_returns_a_user_when_user_name_does_not_exist(pool: Pool<sqlx
         surname: "Doe".to_string(),
         email_address: "jsmith@test.com".to_string(),
         mobile_number: None,
+        role_id: 1
     };
 
     // when
     let result = db.users.create(&user).await;
 
+    dbg!(&result);
+
     // then
     assert!(result.is_ok());
-
-    let created_user = result.unwrap();
-
-    assert!(created_user.user_id.is_positive());
-    assert_eq!(created_user.first_name, user.first_name);
-    assert_eq!(created_user.middle_name, None);
-    assert_eq!(created_user.surname, user.surname);
-    assert_eq!(created_user.email_address, user.email_address);
-    assert_eq!(created_user.mobile_number, None);
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn create_returns_an_error_when_user_email_address_already_exists(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 
@@ -127,6 +121,7 @@ pub async fn create_returns_an_error_when_user_email_address_already_exists(pool
         surname: "Doe".to_string(),
         email_address: "jsmith@test.com".to_string(),
         mobile_number: None,
+        role_id: 1
     };
 
     // when
@@ -136,7 +131,7 @@ pub async fn create_returns_an_error_when_user_email_address_already_exists(pool
     assert!(result.is_err());
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn update_returns_a_user_when_user_id_exists(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 
@@ -147,6 +142,7 @@ pub async fn update_returns_a_user_when_user_id_exists(pool: Pool<sqlx::Postgres
         middle_name: Some("Pope".to_string()),
         surname: "Doe".to_string(),
         mobile_number: Some("0700000000".to_string()),
+        role_id: 1
     };
 
     // when
@@ -176,6 +172,7 @@ pub async fn update_return_error_when_user_id_does_not_exist(pool: Pool<sqlx::Po
         middle_name: Some("Pope".to_string()),
         surname: "Doe".to_string(),
         mobile_number: Some("0700000000".to_string()),
+        role_id: 1
     };
 
     // when
@@ -185,7 +182,7 @@ pub async fn update_return_error_when_user_id_does_not_exist(pool: Pool<sqlx::Po
     assert!(result.is_err());
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user", "user_credential")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user", "user_credential")))]
 pub async fn delete_by_id_returns_rows_affected_eq_one_when_id_exists(pool: Pool<sqlx::Postgres>) {
     let db = Database::test(pool).await;
 

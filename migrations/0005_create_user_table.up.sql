@@ -9,7 +9,9 @@ CREATE TABLE "SMS_GATEWAY_USER"."USER"
     mobile_number character varying(150),
     enabled boolean NOT NULL DEFAULT FALSE,
     email_confirmed boolean NOT NULL DEFAULT FALSE,
+    role_id smallint NOT NULL,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_user_id PRIMARY KEY (user_id),
-    CONSTRAINT uq_user_email_address UNIQUE (email_address)
+    CONSTRAINT uq_user_email_address UNIQUE (email_address),
+    CONSTRAINT fk_user_role_id FOREIGN KEY (role_id) REFERENCES "SMS_GATEWAY_USER"."ROLE" (role_id)
 );

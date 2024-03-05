@@ -26,7 +26,7 @@ pub async fn sign_in_returns_unauthorised_when_email_address_does_not_exist(pool
     assert_eq!(response.status(), http::StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn sign_in_returns_unauthorised_when_credentials_do_not_exist(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
     
@@ -48,7 +48,7 @@ pub async fn sign_in_returns_unauthorised_when_credentials_do_not_exist(pool: Po
     assert_eq!(response.status(), http::StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn sign_in_returns_unauthorised_when_password_does_not_match(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
 
@@ -79,7 +79,7 @@ pub async fn sign_in_returns_unauthorised_when_password_does_not_match(pool: Poo
     assert_eq!(response.status(), http::StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(fixtures(path = "../fixtures", scripts("user")))]
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn sign_in_returns_ok(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
     
