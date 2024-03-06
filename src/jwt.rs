@@ -27,7 +27,7 @@ pub async fn generate_token(user: User, role: Role, permissions: Vec<Permission>
     })
 }
 
-pub async fn validate_token(token: &String, config: &JwtConfig) -> Result<Claims, AppError> {
+pub fn validate_token(token:&str, config: &JwtConfig) -> Result<Claims, AppError> {
     decode::<Claims>(
         token,
         &DecodingKey::from_secret(config.secret.as_ref()),

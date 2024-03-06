@@ -1,7 +1,7 @@
 use actix_web::{ delete, get, post, put, web::{ Data, Path, ServiceConfig, Query }, HttpResponse };
 use log::error;
 use sqlx::Error::RowNotFound;
-use crate::{ model::{pagination::PaginationRequest, app_response::AppResponse, user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}}, error::{AppError, AppErrorType, AppResponseError}, util, AppState };
+use crate::{ auth::JwtAuthenticationGuard, error::{AppError, AppErrorType, AppResponseError}, model::{app_response::AppResponse, pagination::PaginationRequest, user::{CreateUser, UpdateUser}, user_credentials::{CreateUserCredential, UpdateUserCredential}}, util, AppState };
 use actix_web_validator::Json;
 
 pub fn init(cfg: &mut ServiceConfig) {
@@ -16,7 +16,7 @@ pub fn init(cfg: &mut ServiceConfig) {
 }
 
 #[get("users/{user_id}")]
-pub async fn get_user_by_id(state: Data<AppState<'_>>, path: Path<i32>) -> Result<HttpResponse , AppError> {
+pub async fn get_user_by_id(state: Data<AppState<'_>>, path: Path<i32>, _: JwtAuthenticationGuard) -> Result<HttpResponse , AppError> {
     let user_id = path.into_inner();
     state.context.users.find_by_id(&user_id).await
         .map(|user| HttpResponse::Ok().json(user))
@@ -30,7 +30,7 @@ pub async fn get_user_by_id(state: Data<AppState<'_>>, path: Path<i32>) -> Resul
 }
 
 #[get("users")]
-pub async fn get_users(state: Data<AppState<'_>>) -> Result<HttpResponse , AppError> {
+pub async fn get_users(state: Data<AppState<'_>>, _: JwtAuthenticationGuard) -> Result<HttpResponse , AppError> {
     state.context.users.find_all().await
         .map(|users| HttpResponse::Ok().json(users))
         .map_err(|error| {
@@ -40,7 +40,7 @@ pub async fn get_users(state: Data<AppState<'_>>) -> Result<HttpResponse , AppEr
 }
 
 #[get("users-paginated")]
-pub async fn get_users_paginated(state: Data<AppState<'_>>, pagination: Query<PaginationRequest>) -> Result<HttpResponse , AppError> {
+pub async fn get_users_paginated(state: Data<AppState<'_>>, pagination: Query<PaginationRequest>, _: JwtAuthenticationGuard) -> Result<HttpResponse , AppError> {
     state.context.users.find_paginated(pagination.page, pagination.page_size).await
         .map(|results| HttpResponse::Ok().json(results))
         .map_err(|e| {
@@ -50,7 +50,7 @@ pub async fn get_users_paginated(state: Data<AppState<'_>>, pagination: Query<Pa
 }
 
 #[post("users")]
-pub async fn create_user(state: Data<AppState<'_>>, body: Json<CreateUser>) -> Result<HttpResponse , AppError>  {
+pub async fn create_user(state: Data<AppState<'_>>, body: Json<CreateUser>, _: JwtAuthenticationGuard) -> Result<HttpResponse , AppError>  {
     state.context.users.create(&body.into_inner()).await
         .map(|user| HttpResponse::Created().json(user))
         .map_err(|error| {
@@ -65,7 +65,7 @@ pub async fn create_user(state: Data<AppState<'_>>, body: Json<CreateUser>) -> R
 }
 
 #[post("users/{user_id}/credentials")]
-pub async fn create_user_credential(state: Data<AppState<'_>>, path: Path<i32>, body: Json<CreateUserCredential>) -> Result<HttpResponse , AppError>  {
+pub async fn create_user_credential(state: Data<AppState<'_>>, path: Path<i32>, body: Json<CreateUserCredential>, _: JwtAuthenticationGuard) -> Result<HttpResponse , AppError>  {
     let user_id = path.into_inner();
     let CreateUserCredential { username, password }= body.into_inner();
 
@@ -88,7 +88,7 @@ pub async fn create_user_credential(state: Data<AppState<'_>>, path: Path<i32>, 
 }
 
 #[put("users/{user_id}/credentials/{user_credential_id}")]
-pub async fn update_user_credential(state: Data<AppState<'_>>, path: Path<(i32, i32)>, body: Json<UpdateUserCredential>) -> Result<HttpResponse , AppError>  {
+pub async fn update_user_credential(state: Data<AppState<'_>>, path: Path<(i32, i32)>, body: Json<UpdateUserCredential>, _: JwtAuthenticationGuard) -> Result<HttpResponse , AppError>  {
     let (user_id, user_credential_id) = path.into_inner();
     let UpdateUserCredential { previous_password, password } = body.into_inner();
 
@@ -125,7 +125,7 @@ pub async fn update_user_credential(state: Data<AppState<'_>>, path: Path<(i32, 
 }
 
 #[put("users/{user_id}")]
-pub async fn update_user(state: Data<AppState<'_>>, path: Path<i32>, body: Json<UpdateUser>) -> Result<HttpResponse , AppError>  {
+pub async fn update_user(state: Data<AppState<'_>>, path: Path<i32>, body: Json<UpdateUser>, _: JwtAuthenticationGuard) -> Result<HttpResponse , AppError>  {
     let user_id = path.into_inner();
     state.context.users.update(&user_id, &body.into_inner()).await
         .map(|user| HttpResponse::Ok().json(user))
@@ -136,7 +136,7 @@ pub async fn update_user(state: Data<AppState<'_>>, path: Path<i32>, body: Json<
 }
 
 #[delete("users/{user_id}")]
-pub async fn delete_user_with_id(state: Data<AppState<'_>>, path: Path<i32>) -> Result<HttpResponse , AppError> {
+pub async fn delete_user_with_id(state: Data<AppState<'_>>, path: Path<i32>, _: JwtAuthenticationGuard) -> Result<HttpResponse , AppError> {
     let user_id = path.into_inner();
     
     state.context.users.delete(&user_id).await

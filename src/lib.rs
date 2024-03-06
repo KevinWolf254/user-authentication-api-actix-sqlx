@@ -11,6 +11,7 @@ pub mod error;
 pub mod model;
 pub mod util;
 pub mod jwt;
+pub mod auth;
 
 pub struct AppState<'a> {
     pub connections: Mutex<u32>,

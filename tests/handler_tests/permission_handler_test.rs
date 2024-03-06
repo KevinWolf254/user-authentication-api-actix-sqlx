@@ -3,12 +3,13 @@ use bulk_sms_api::{handler, entity::permission::{CreatePermission, Permission}, 
 use sqlx::Pool;
 use serde_json::json;
 
-use crate::handler_tests::init_app_state;
+use crate::handler_tests::{generate_token, init_app_state};
 
 #[sqlx::test]
 pub async fn get_permissions_returns_ok(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -16,7 +17,9 @@ pub async fn get_permissions_returns_ok(pool: Pool<sqlx::Postgres>) {
     )
     .await;
 
-    let request = test::TestRequest::get().uri("/permissions").to_request();
+    let request = test::TestRequest::get().uri("/permissions")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
@@ -27,7 +30,8 @@ pub async fn get_permissions_returns_ok(pool: Pool<sqlx::Postgres>) {
 pub async fn get_permissions_paginated_returns_ok(pool: Pool<sqlx::Postgres>) {
     // given
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -38,6 +42,7 @@ pub async fn get_permissions_paginated_returns_ok(pool: Pool<sqlx::Postgres>) {
     // when
     let request = test::TestRequest::get()
         .uri("/permissions-paginated?page=1&pageSize=5")
+        .insert_header(("Authorization", format!("Bearer {}", jwt)))
         .to_request();
 
     // then
@@ -49,7 +54,8 @@ pub async fn get_permissions_paginated_returns_ok(pool: Pool<sqlx::Postgres>) {
 #[sqlx::test(fixtures(path = "../fixtures", scripts("permission")))]
 pub async fn get_permission_by_id_returns_ok_when_id_exists(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -59,7 +65,9 @@ pub async fn get_permission_by_id_returns_ok_when_id_exists(pool: Pool<sqlx::Pos
 
     // given
     // when
-    let request = test::TestRequest::get().uri("/permissions/1").to_request();
+    let request = test::TestRequest::get().uri("/permissions/1")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
@@ -76,7 +84,8 @@ pub async fn get_permission_by_id_returns_ok_when_id_exists(pool: Pool<sqlx::Pos
 #[sqlx::test]
 pub async fn get_permission_by_id_returns_not_found_when_id_does_not_exist(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -84,7 +93,9 @@ pub async fn get_permission_by_id_returns_not_found_when_id_does_not_exist(pool:
     )
     .await;
 
-    let request = test::TestRequest::get().uri("/permissions/201").to_request();
+    let request = test::TestRequest::get().uri("/permissions/201")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
@@ -100,7 +111,8 @@ pub async fn get_permission_by_id_returns_not_found_when_id_does_not_exist(pool:
 #[sqlx::test]
 pub async fn create_permission_returns_ok_when_name_does_not_exist(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -116,6 +128,7 @@ pub async fn create_permission_returns_ok_when_name_does_not_exist(pool: Pool<sq
     let payload = json!(body);
 
     let request = test::TestRequest::post().uri("/permissions")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
         .set_json(&payload)
         .to_request();
 
@@ -133,7 +146,8 @@ pub async fn create_permission_returns_ok_when_name_does_not_exist(pool: Pool<sq
 #[sqlx::test(fixtures(path = "../fixtures", scripts("permission")))]
 pub async fn create_permission_returns_bad_request_when_name_exists(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -149,6 +163,7 @@ pub async fn create_permission_returns_bad_request_when_name_exists(pool: Pool<s
     let payload = json!(body);
 
     let request = test::TestRequest::post().uri("/permissions")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
     .set_json(&payload)
     .to_request();
 
@@ -165,6 +180,7 @@ pub async fn create_permission_returns_bad_request_when_name_exists(pool: Pool<s
 #[sqlx::test(fixtures(path = "../fixtures", scripts("permission")))]
 pub async fn delete_permission_with_id_returns_ok_when_id_exists(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
 
     let mut app = test::init_service(
         App::new()
@@ -177,7 +193,9 @@ pub async fn delete_permission_with_id_returns_ok_when_id_exists(pool: Pool<sqlx
     let permission_id = 1;
 
     // when
-    let request = test::TestRequest::delete().uri(format!("/permissions/{}", permission_id).as_str()).to_request();
+    let request = test::TestRequest::delete().uri(format!("/permissions/{}", permission_id).as_str())
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
@@ -194,6 +212,7 @@ pub async fn delete_permission_with_id_returns_ok_when_id_exists(pool: Pool<sqlx
 #[sqlx::test]
 pub async fn delete_permission_with_id_returns_not_found_when_id_does_not_exist(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
 
     let mut app = test::init_service(
         App::new()
@@ -206,7 +225,9 @@ pub async fn delete_permission_with_id_returns_not_found_when_id_does_not_exist(
     let permission_id = 1;
 
     // when
-    let request = test::TestRequest::delete().uri(format!("/permissions/{}", permission_id).as_str()).to_request();
+    let request = test::TestRequest::delete().uri(format!("/permissions/{}", permission_id).as_str())
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 

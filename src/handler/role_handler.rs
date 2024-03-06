@@ -1,7 +1,7 @@
 use actix_web::{ delete, get, post, web::{ Data, Path, ServiceConfig, Query, Json }, HttpResponse };
 use log::error;
 
-use crate::{AppState, error::{AppError, AppErrorType, AppResponseError}, model::{pagination::PaginationRequest, app_response::AppResponse}, entity::role::CreateRole};
+use crate::{auth::JwtAuthenticationGuard, entity::role::CreateRole, error::{AppError, AppErrorType, AppResponseError}, model::{app_response::AppResponse, pagination::PaginationRequest}, AppState};
 
 pub fn init(cfg: &mut ServiceConfig) {
     cfg.service(get_roles);
@@ -13,7 +13,7 @@ pub fn init(cfg: &mut ServiceConfig) {
 }
 
 #[get("roles")]
-pub async fn get_roles(state: Data<AppState<'_>>) -> Result<HttpResponse, AppError> {
+pub async fn get_roles(state: Data<AppState<'_>>, _: JwtAuthenticationGuard) -> Result<HttpResponse, AppError> {
     match state.context.roles.find_all().await {
         Ok(roles) => Ok(HttpResponse::Ok().json(roles)),
         Err(error) => {
@@ -24,7 +24,7 @@ pub async fn get_roles(state: Data<AppState<'_>>) -> Result<HttpResponse, AppErr
 }
 
 #[get("roles-paginated")]
-pub async fn get_roles_paginated(state: Data<AppState<'_>>, pagination: Query<PaginationRequest>) -> Result<HttpResponse , AppError> {
+pub async fn get_roles_paginated(state: Data<AppState<'_>>, pagination: Query<PaginationRequest>, _: JwtAuthenticationGuard) -> Result<HttpResponse , AppError> {
     state.context.roles.find_paginated(pagination.page, pagination.page_size).await
         .map(|results| HttpResponse::Ok().json(results))
         .map_err(|e| {
@@ -34,7 +34,7 @@ pub async fn get_roles_paginated(state: Data<AppState<'_>>, pagination: Query<Pa
 }
 
 #[get("roles/{role_id}")]
-pub async fn get_role_by_id(state: Data<AppState<'_>>, path: Path<i16>) -> Result<HttpResponse , AppError> {
+pub async fn get_role_by_id(state: Data<AppState<'_>>, path: Path<i16>, _: JwtAuthenticationGuard) -> Result<HttpResponse , AppError> {
     let role_id = path.into_inner();
     state.context.roles.find_by_id(&role_id).await
         .map(|role| HttpResponse::Ok().json(role))
@@ -48,7 +48,7 @@ pub async fn get_role_by_id(state: Data<AppState<'_>>, path: Path<i16>) -> Resul
 }
 
 #[post("roles")]
-pub async fn create_role(state: Data<AppState<'_>>, body: Json<CreateRole>) -> Result<HttpResponse , AppError>  {
+pub async fn create_role(state: Data<AppState<'_>>, body: Json<CreateRole>, _: JwtAuthenticationGuard) -> Result<HttpResponse , AppError>  {
     state.context.roles.create(&body.into_inner()).await
         .map(|role| HttpResponse::Created().json(role))
         .map_err(|error| {
@@ -63,7 +63,7 @@ pub async fn create_role(state: Data<AppState<'_>>, body: Json<CreateRole>) -> R
 }
 
 #[delete("roles/{role_id}")]
-pub async fn delete_role_with_id(state: Data<AppState<'_>>, path: Path<i16>) -> Result<HttpResponse , AppError> {
+pub async fn delete_role_with_id(state: Data<AppState<'_>>, path: Path<i16>, _: JwtAuthenticationGuard) -> Result<HttpResponse , AppError> {
     let role_id = path.into_inner();
     
     state.context.roles.delete(&role_id).await
@@ -81,7 +81,7 @@ pub async fn delete_role_with_id(state: Data<AppState<'_>>, path: Path<i16>) -> 
 }
 
 #[get("roles/{role_id}/permissions")]
-pub async fn get_role_permissions(state: Data<AppState<'_>>, path: Path<i16>) -> Result<HttpResponse , AppError> {
+pub async fn get_role_permissions(state: Data<AppState<'_>>, path: Path<i16>, _: JwtAuthenticationGuard) -> Result<HttpResponse , AppError> {
     let role_id = path.into_inner();
     state.context.role_permissions.find_role_permissions(&role_id).await
         .map(|roles| HttpResponse::Ok().json(roles))

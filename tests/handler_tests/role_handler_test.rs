@@ -3,12 +3,13 @@ use bulk_sms_api::{handler, entity::{role::{Role, CreateRole}, permission::Permi
 use serde_json::json;
 use sqlx::Pool;
 
-use crate::handler_tests::init_app_state;
+use crate::handler_tests::{generate_token, init_app_state};
 
 #[sqlx::test]
 pub async fn get_roles_returns_ok(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -16,7 +17,10 @@ pub async fn get_roles_returns_ok(pool: Pool<sqlx::Postgres>) {
     )
     .await;
 
-    let request = test::TestRequest::get().uri("/roles").to_request();
+    let request = test::TestRequest::get()
+    .uri("/roles")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
@@ -27,7 +31,8 @@ pub async fn get_roles_returns_ok(pool: Pool<sqlx::Postgres>) {
 pub async fn get_roles_paginated_returns_ok(pool: Pool<sqlx::Postgres>) {
     // given
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -38,6 +43,7 @@ pub async fn get_roles_paginated_returns_ok(pool: Pool<sqlx::Postgres>) {
     // when
     let request = test::TestRequest::get()
         .uri("/roles-paginated?page=1&pageSize=5")
+        .insert_header(("Authorization", format!("Bearer {}", jwt)))
         .to_request();
 
     // then
@@ -49,7 +55,8 @@ pub async fn get_roles_paginated_returns_ok(pool: Pool<sqlx::Postgres>) {
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role")))]
 pub async fn get_role_by_id_returns_ok_when_id_exists(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -59,7 +66,10 @@ pub async fn get_role_by_id_returns_ok_when_id_exists(pool: Pool<sqlx::Postgres>
 
     // given
     // when
-    let request = test::TestRequest::get().uri("/roles/1").to_request();
+    let request = test::TestRequest::get()
+    .uri("/roles/1")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
@@ -76,7 +86,8 @@ pub async fn get_role_by_id_returns_ok_when_id_exists(pool: Pool<sqlx::Postgres>
 #[sqlx::test]
 pub async fn get_role_by_id_returns_not_found_when_id_does_not_exist(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -84,7 +95,10 @@ pub async fn get_role_by_id_returns_not_found_when_id_does_not_exist(pool: Pool<
     )
     .await;
 
-    let request = test::TestRequest::get().uri("/roles/201").to_request();
+    let request = test::TestRequest::get()
+    .uri("/roles/201")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
@@ -100,7 +114,8 @@ pub async fn get_role_by_id_returns_not_found_when_id_does_not_exist(pool: Pool<
 #[sqlx::test]
 pub async fn create_role_returns_ok_when_name_does_not_exist(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -117,6 +132,7 @@ pub async fn create_role_returns_ok_when_name_does_not_exist(pool: Pool<sqlx::Po
 
     let request = test::TestRequest::post().uri("/roles")
         .set_json(&payload)
+        .insert_header(("Authorization", format!("Bearer {}", jwt)))
         .to_request();
 
     let response = test::call_service(&mut app, request).await;
@@ -133,7 +149,8 @@ pub async fn create_role_returns_ok_when_name_does_not_exist(pool: Pool<sqlx::Po
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role")))]
 pub async fn create_role_returns_bad_request_when_name_exists(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -149,6 +166,7 @@ pub async fn create_role_returns_bad_request_when_name_exists(pool: Pool<sqlx::P
     let payload = json!(body);
 
     let request = test::TestRequest::post().uri("/roles")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
     .set_json(&payload)
     .to_request();
 
@@ -165,6 +183,7 @@ pub async fn create_role_returns_bad_request_when_name_exists(pool: Pool<sqlx::P
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role")))]
 pub async fn delete_role_with_id_returns_ok_when_id_exists(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
 
     let mut app = test::init_service(
         App::new()
@@ -177,7 +196,10 @@ pub async fn delete_role_with_id_returns_ok_when_id_exists(pool: Pool<sqlx::Post
     let role_id = 1;
 
     // when
-    let request = test::TestRequest::delete().uri(format!("/roles/{}", role_id).as_str()).to_request();
+    let request = test::TestRequest::delete()
+    .uri(format!("/roles/{}", role_id).as_str())
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
@@ -193,6 +215,7 @@ pub async fn delete_role_with_id_returns_ok_when_id_exists(pool: Pool<sqlx::Post
 #[sqlx::test]
 pub async fn delete_role_with_id_returns_not_found_when_id_does_not_exist(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
 
     let mut app = test::init_service(
         App::new()
@@ -205,7 +228,9 @@ pub async fn delete_role_with_id_returns_not_found_when_id_does_not_exist(pool: 
     let role_id = 1;
 
     // when
-    let request = test::TestRequest::delete().uri(format!("/roles/{}", role_id).as_str()).to_request();
+    let request = test::TestRequest::delete().uri(format!("/roles/{}", role_id).as_str())
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
@@ -221,7 +246,8 @@ pub async fn delete_role_with_id_returns_not_found_when_id_does_not_exist(pool: 
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role", "permission", "role_permission")))]
 pub async fn get_role_permissions_returns_ok(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -230,7 +256,9 @@ pub async fn get_role_permissions_returns_ok(pool: Pool<sqlx::Postgres>) {
     .await;
     // given
     // when
-    let request = test::TestRequest::get().uri("/roles/1/permissions").to_request();
+    let request = test::TestRequest::get().uri("/roles/1/permissions")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
@@ -247,7 +275,8 @@ pub async fn get_role_permissions_returns_ok(pool: Pool<sqlx::Postgres>) {
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role")))]
 pub async fn get_role_permissions_returns_ok_even_when_role_does_not_have_permissions(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -256,7 +285,9 @@ pub async fn get_role_permissions_returns_ok_even_when_role_does_not_have_permis
     .await;
     // given
     // when
-    let request = test::TestRequest::get().uri("/roles/1/permissions").to_request();
+    let request = test::TestRequest::get().uri("/roles/1/permissions")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
@@ -273,7 +304,8 @@ pub async fn get_role_permissions_returns_ok_even_when_role_does_not_have_permis
 #[sqlx::test]
 pub async fn get_role_permissions_returns_not_found_when_role_id_does_not_exist(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -282,7 +314,9 @@ pub async fn get_role_permissions_returns_not_found_when_role_id_does_not_exist(
     .await;
     // given
     // when
-    let request = test::TestRequest::get().uri("/roles/101/permissions").to_request();
+    let request = test::TestRequest::get().uri("/roles/101/permissions")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 

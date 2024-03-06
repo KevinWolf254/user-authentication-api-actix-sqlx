@@ -3,12 +3,13 @@ use bulk_sms_api::{model::{app_response::AppResponse, pagination::PaginatedResul
 use sqlx::Pool;
 use serde_json::json;
 
-use crate::handler_tests::init_app_state;
+use crate::handler_tests::{generate_token, init_app_state};
 
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn get_user_by_id_returns_ok_when_id_exists(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -18,7 +19,10 @@ pub async fn get_user_by_id_returns_ok_when_id_exists(pool: Pool<sqlx::Postgres>
 
     // given
     // when
-    let request = test::TestRequest::get().uri("/users/1").to_request();
+    let request = test::TestRequest::get()
+    .uri("/users/1")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))    
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
@@ -46,9 +50,13 @@ pub async fn get_user_by_id_returns_not_found_when_id_does_not_exist(pool: Pool<
     )
     .await;
 
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
     // given
     // when
-    let request = test::TestRequest::get().uri("/users/1").to_request();
+    let request = test::TestRequest::get()
+    .uri("/users/1")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
@@ -64,7 +72,8 @@ pub async fn get_user_by_id_returns_not_found_when_id_does_not_exist(pool: Pool<
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn get_users_returns_ok(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -72,7 +81,10 @@ pub async fn get_users_returns_ok(pool: Pool<sqlx::Postgres>) {
     )
     .await;
 
-    let request = test::TestRequest::get().uri("/users").to_request();
+    let request = test::TestRequest::get()
+    .uri("/users")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
@@ -88,7 +100,8 @@ pub async fn get_users_returns_ok(pool: Pool<sqlx::Postgres>) {
 pub async fn get_users_paginated_returns_ok(pool: Pool<sqlx::Postgres>) {
     // given
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -99,6 +112,7 @@ pub async fn get_users_paginated_returns_ok(pool: Pool<sqlx::Postgres>) {
     // when
     let request = test::TestRequest::get()
         .uri("/users-paginated?page=1&pageSize=5")
+        .insert_header(("Authorization", format!("Bearer {}", jwt)))
         .to_request();
 
     // then
@@ -118,7 +132,8 @@ pub async fn get_users_paginated_returns_ok(pool: Pool<sqlx::Postgres>) {
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role")))]
 pub async fn create_user_returns_ok(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -141,6 +156,7 @@ pub async fn create_user_returns_ok(pool: Pool<sqlx::Postgres>) {
     // when
     let request = test::TestRequest::post().uri("/users")
         .set_json(&payload)
+        .insert_header(("Authorization", format!("Bearer {}", jwt)))
         .to_request();
 
     let response = test::call_service(&mut app, request).await;
@@ -162,7 +178,8 @@ pub async fn create_user_returns_ok(pool: Pool<sqlx::Postgres>) {
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn create_user_returns_bad_request_when_email_address_exists(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -185,6 +202,7 @@ pub async fn create_user_returns_bad_request_when_email_address_exists(pool: Poo
     // when
     let request = test::TestRequest::post().uri("/users")
         .set_json(&payload)
+        .insert_header(("Authorization", format!("Bearer {}", jwt)))
         .to_request();
 
     let response = test::call_service(&mut app, request).await;
@@ -201,7 +219,8 @@ pub async fn create_user_returns_bad_request_when_email_address_exists(pool: Poo
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn update_user_returns_ok(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -223,6 +242,7 @@ pub async fn update_user_returns_ok(pool: Pool<sqlx::Postgres>) {
     // when
     let request = test::TestRequest::put().uri("/users/1")
         .set_json(&payload)
+        .insert_header(("Authorization", format!("Bearer {}", jwt)))
         .to_request();
 
     let response = test::call_service(&mut app, request).await;
@@ -243,7 +263,8 @@ pub async fn update_user_returns_ok(pool: Pool<sqlx::Postgres>) {
 #[sqlx::test]
 pub async fn update_user_returns_not_found_when_id_does_not_exist(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -265,6 +286,7 @@ pub async fn update_user_returns_not_found_when_id_does_not_exist(pool: Pool<sql
     // when
     let request = test::TestRequest::put().uri("/users/1")
         .set_json(&payload)
+        .insert_header(("Authorization", format!("Bearer {}", jwt)))
         .to_request();
 
     let response = test::call_service(&mut app, request).await;
@@ -281,6 +303,7 @@ pub async fn update_user_returns_not_found_when_id_does_not_exist(pool: Pool<sql
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn delete_user_with_id_returns_ok_when_id_exists(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
 
     let mut app = test::init_service(
         App::new()
@@ -290,7 +313,10 @@ pub async fn delete_user_with_id_returns_ok_when_id_exists(pool: Pool<sqlx::Post
     .await;
 
     // when
-    let request = test::TestRequest::delete().uri("/users/1").to_request();
+    let request = test::TestRequest::delete()
+    .uri("/users/1")
+    .insert_header(("Authorization", format!("Bearer {}", jwt)))
+    .to_request();
 
     let response = test::call_service(&mut app, request).await;
 
@@ -307,7 +333,8 @@ pub async fn delete_user_with_id_returns_ok_when_id_exists(pool: Pool<sqlx::Post
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn create_user_credential_returns_ok(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -326,6 +353,7 @@ pub async fn create_user_credential_returns_ok(pool: Pool<sqlx::Postgres>) {
     // when
     let request = test::TestRequest::post().uri("/users/1/credentials")
         .set_json(&payload)
+        .insert_header(("Authorization", format!("Bearer {}", jwt)))
         .to_request();
 
     let response = test::call_service(&mut app, request).await;
@@ -344,7 +372,8 @@ pub async fn create_user_credential_returns_ok(pool: Pool<sqlx::Postgres>) {
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user", "user_credential")))]
 pub async fn create_user_credential_returns_error_when_username_already_exists(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -363,6 +392,7 @@ pub async fn create_user_credential_returns_error_when_username_already_exists(p
     // when
     let request = test::TestRequest::post().uri("/users/2/credentials")
         .set_json(&payload)
+        .insert_header(("Authorization", format!("Bearer {}", jwt)))
         .to_request();
 
     let response = test::call_service(&mut app, request).await;
@@ -381,7 +411,8 @@ pub async fn create_user_credential_returns_error_when_username_already_exists(p
 #[sqlx::test]
 pub async fn create_user_credential_returns_error_when_user_does_not_exist(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -400,6 +431,7 @@ pub async fn create_user_credential_returns_error_when_user_does_not_exist(pool:
     // when
     let request = test::TestRequest::post().uri("/users/1/credentials")
         .set_json(&payload)
+        .insert_header(("Authorization", format!("Bearer {}", jwt)))
         .to_request();
 
     let response = test::call_service(&mut app, request).await;
@@ -419,6 +451,7 @@ pub async fn create_user_credential_returns_error_when_user_does_not_exist(pool:
 pub async fn update_user_credential_returns_ok(pool: Pool<sqlx::Postgres>) {
     // given
     let app_state = init_app_state(pool.clone()).await;
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
 
     let hashed_password = util::hash_password(&"previous_password".to_string(), &app_state.argon_config).await.unwrap();
 
@@ -445,6 +478,7 @@ pub async fn update_user_credential_returns_ok(pool: Pool<sqlx::Postgres>) {
     // when
     let request = test::TestRequest::put().uri("/users/1/credentials/1")
         .set_json(&payload)
+        .insert_header(("Authorization", format!("Bearer {}", jwt)))
         .to_request();
 
     dbg!(":?", &request);
@@ -466,7 +500,8 @@ pub async fn update_user_credential_returns_ok(pool: Pool<sqlx::Postgres>) {
 #[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
 pub async fn update_user_credential_returns_error_when_credential_does_not_exist(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -485,6 +520,7 @@ pub async fn update_user_credential_returns_error_when_credential_does_not_exist
     // when
     let request = test::TestRequest::put().uri("/users/1/credentials/1")
         .set_json(&payload)
+        .insert_header(("Authorization", format!("Bearer {}", jwt)))
         .to_request();
 
     dbg!(":?", &request);
@@ -505,7 +541,8 @@ pub async fn update_user_credential_returns_error_when_credential_does_not_exist
 #[sqlx::test]
 pub async fn update_user_credential_returns_error_when_user_and_credential_do_not_exist(pool: Pool<sqlx::Postgres>) {
     let app_state = init_app_state(pool).await;
-    
+    let jwt = generate_token(&app_state.jwt_config).await.unwrap();
+
     let mut app = test::init_service(
         App::new()
             .app_data(app_state.clone())
@@ -524,6 +561,7 @@ pub async fn update_user_credential_returns_error_when_user_and_credential_do_no
     // when
     let request = test::TestRequest::put().uri("/users/1/credentials/1")
         .set_json(&payload)
+        .insert_header(("Authorization", format!("Bearer {}", jwt)))
         .to_request();
 
     dbg!(":?", &request);
