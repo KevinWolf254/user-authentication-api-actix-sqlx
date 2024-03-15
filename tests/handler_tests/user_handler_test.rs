@@ -234,6 +234,8 @@ pub async fn update_user_returns_ok(pool: Pool<sqlx::Postgres>) {
         middle_name: Some("Pope".to_string()),
         surname: "Dope".to_string(),
         mobile_number: Some("0700000000".to_string()),
+        enabled: false,
+        email_confirmed: false,
         role_id: 1
     };
 
@@ -278,6 +280,8 @@ pub async fn update_user_returns_not_found_when_id_does_not_exist(pool: Pool<sql
         middle_name: Some("Pope".to_string()),
         surname: "Dope".to_string(),
         mobile_number: Some("0700000000".to_string()),
+        enabled: false,
+        email_confirmed: false,
         role_id: 1
     };
 

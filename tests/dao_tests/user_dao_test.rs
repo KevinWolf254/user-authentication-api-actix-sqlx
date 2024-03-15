@@ -142,6 +142,8 @@ pub async fn update_returns_a_user_when_user_id_exists(pool: Pool<sqlx::Postgres
         middle_name: Some("Pope".to_string()),
         surname: "Doe".to_string(),
         mobile_number: Some("0700000000".to_string()),
+        enabled: false,
+        email_confirmed: false,
         role_id: 1
     };
 
@@ -172,6 +174,8 @@ pub async fn update_return_error_when_user_id_does_not_exist(pool: Pool<sqlx::Po
         middle_name: Some("Pope".to_string()),
         surname: "Doe".to_string(),
         mobile_number: Some("0700000000".to_string()),
+        enabled: false,
+        email_confirmed: false,
         role_id: 1
     };
 

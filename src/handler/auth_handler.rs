@@ -1,4 +1,4 @@
-use actix_web::{dev::Path, post, web::{Data, Json, ServiceConfig}, HttpResponse};
+use actix_web::{post, web::{Data, Json, ServiceConfig}, HttpResponse};
 use log::error;
 
 use crate::{error::{AppError, AppErrorType}, jwt, model::{app_response::AppResponse, sign_in::SignIn, sign_up::SignUp, token_response::TokenResponse, user::CreateUser, user_credentials::CreateUserCredential}, util, AppState};

@@ -24,5 +24,7 @@ pub struct UpdateUser {
     #[validate(length(min = 3, message = "Surname is required!"))]
     pub surname: String,
     pub mobile_number: Option<String>,
+    pub enabled: bool,
+    pub email_confirmed: bool,
     pub role_id: i16,
 }
