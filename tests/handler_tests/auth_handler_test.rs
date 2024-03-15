@@ -1,5 +1,5 @@
 use actix_web::{test, App, http};
-use bulk_sms_api::{handler, model::{sign_in::SignIn, token_response::TokenResponse, user_credentials::CreateUserCredential}, util};
+use bulk_sms_api::{handler, model::{sign_in::SignIn, sign_up::SignUp, token_response::TokenResponse, user_credentials::CreateUserCredential}, util};
 use sqlx::Pool;
 
 use crate::handler_tests::init_app_state;
@@ -116,4 +116,69 @@ pub async fn sign_in_returns_ok(pool: Pool<sqlx::Postgres>) {
     dbg!("Token: ", &result.token);
 
     assert!(!result.token.is_empty());
+}
+
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role")))]
+pub async fn sign_up_returns_ok(pool: Pool<sqlx::Postgres>) {
+    let app_state = init_app_state(pool).await;
+
+    let mut app = test::init_service(
+        App::new()
+            .app_data(app_state.clone())
+            .configure(handler::init_auth_handler),
+    )
+    .await;
+
+    // given
+    let sign_up_request = SignUp {
+        first_name: "John".to_string(),
+        surname: "Smith".to_string(),
+        email_address: "jsmith@test.com".to_string(),
+        password: "1234567".to_string()
+    };
+    // when
+
+    let request = test::TestRequest::post().uri("/sign-up")
+        .set_json(&sign_up_request)
+        .to_request();
+
+    // then
+    let response = test::call_service(&mut app, request).await;
+
+    dbg!(&response);
+
+    assert_eq!(response.status(), http::StatusCode::CREATED);
+}
+
+
+#[sqlx::test(fixtures(path = "../fixtures", scripts("role", "user")))]
+pub async fn sign_up_returns_bad_request_when_email_address_exists(pool: Pool<sqlx::Postgres>) {
+    let app_state = init_app_state(pool).await;
+
+    let mut app = test::init_service(
+        App::new()
+            .app_data(app_state.clone())
+            .configure(handler::init_auth_handler),
+    )
+    .await;
+
+    // given
+    let sign_up_request = SignUp {
+        first_name: "John".to_string(),
+        surname: "Smith".to_string(),
+        email_address: "jsmith@test.com".to_string(),
+        password: "1234567".to_string()
+    };
+    // when
+
+    let request = test::TestRequest::post().uri("/sign-up")
+        .set_json(&sign_up_request)
+        .to_request();
+
+    // then
+    let response = test::call_service(&mut app, request).await;
+
+    dbg!(&response);
+
+    assert_eq!(response.status(), http::StatusCode::BAD_REQUEST);
 }
