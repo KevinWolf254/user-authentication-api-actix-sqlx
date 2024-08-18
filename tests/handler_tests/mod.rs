@@ -1,8 +1,8 @@
-use std::{sync::{Mutex, Arc}, env};
+use std::{sync::Arc, env};
 use argon2::Config;
 
 use actix_web::web::{self, Data};
-use bulk_sms_api::{dao::Database, entity::{permission::Permission, role::Role, user::User}, error::AppError, jwt, model::jwt_config::JwtConfig, AppState};
+use bulk_sms_api::{dao::Database, entity::{permission::Permission, role::Role, user::User}, error::AppError, jwt, AppState, JwtConfig};
 use chrono::Utc;
 //configure_log,
 use dotenvy::dotenv;
@@ -30,10 +30,9 @@ pub async fn init_app_state(pool: Pool<sqlx::Postgres>) -> Data<AppState<'static
     let jwt_config = JwtConfig {secret, expires_in};
     
     web::Data::new(AppState {
-        connections: Mutex::new(0),
         context: Arc::new(db_context),
         argon_config: Arc::new(config),
-        jwt_config: Arc::new(jwt_config)
+        jwt_config: Arc::new(jwt_config),
     })
 }
 

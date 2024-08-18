@@ -7,6 +7,7 @@ use sqlx::postgres::{ PgRow, PgPoolOptions };
 use crate::entity::permission::Permission;
 use crate::entity::role::Role;
 use crate::entity::user::User;
+use crate::entity::user_code::UserCode;
 use crate::entity::user_credential::UserCredential;
 
 pub struct Table<'c, T> where T: FromRow<'c, PgRow> {
@@ -61,6 +62,7 @@ pub struct Database<'c> {
     pub users: Arc<Table<'c, User>>,  
     pub user_credentials: Arc<Table<'c, UserCredential>>,  
     pub user_role: Arc<JoinTable<'c, User, Role>>,
+    pub user_code: Arc<Table<'c, UserCode>>,  
 }
 
 impl<'a> Database<'a> {
@@ -80,6 +82,7 @@ impl<'a> Database<'a> {
             users: Arc::from(Table::new(pool.clone())),
             user_credentials: Arc::from(Table::new(pool.clone())),
             user_role: Arc::from(JoinTable::new(pool.clone())),
+            user_code: Arc::from(Table::new(pool.clone())),
         }
     }
 
@@ -91,6 +94,7 @@ impl<'a> Database<'a> {
             users: Arc::from(Table::new(Arc::new(pool.clone()))),
             user_credentials: Arc::from(Table::new(Arc::new(pool.clone()))),
             user_role: Arc::from(JoinTable::new(Arc::new(pool.clone()))),
+            user_code: Arc::from(Table::new(Arc::new(pool.clone()))),
         }
     }
 }

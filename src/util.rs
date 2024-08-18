@@ -1,4 +1,5 @@
 use rand::RngCore;
+use rand::prelude::*;
 
 use argon2::{self, Config};
 
@@ -20,6 +21,11 @@ async fn generate_salt() -> [u8; 16] {
     let mut salt = [0u8; 16];
     rng.fill_bytes(&mut salt);
     salt
+}
+
+pub async fn generate_confirmation_code() -> i32 {
+    let mut rng = rand::thread_rng();
+    rng.gen_range(1000..=9999)
 }
 
 #[cfg(test)]

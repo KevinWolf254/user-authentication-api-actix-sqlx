@@ -133,7 +133,7 @@ pub async fn sign_up_returns_ok(pool: Pool<sqlx::Postgres>) {
     let sign_up_request = SignUp {
         first_name: "John".to_string(),
         surname: "Smith".to_string(),
-        email_address: "jsmith@test.com".to_string(),
+        email_address: "kanyijavaguru@gmail.com".to_string(),
         password: "1234567".to_string()
     };
     // when

@@ -22,6 +22,7 @@ sqlx migrate add -r create_role_table
 sqlx migrate add -r create_role_permission_table
 sqlx migrate add -r create_user_table
 sqlx migrate add -r create_user_credential_table
+sqlx migrate add -r create_user_code_table
 ```
 
 4. Add script to create tables
@@ -101,6 +102,18 @@ CREATE TABLE "SMS_GATEWAY_USER"."USER_CREDENTIAL"
 );
 ```
 
+```bash
+CREATE TABLE "SMS_GATEWAY_USER"."USER_CODE"
+(
+    user_code_id serial NOT NULL,
+    code integer NOT NULL,
+    user_id integer NOT NULL,
+    created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_user_code_id PRIMARY KEY (user_code_id),
+    CONSTRAINT fk_user_code_user_id FOREIGN KEY (user_id) REFERENCES "SMS_GATEWAY_USER"."USER" (user_id)
+);
+```
+
 5. Add script to revert tables
 
 ```bash
@@ -109,6 +122,10 @@ DROP TABLE IF EXISTS "SMS_GATEWAY_USER"."PERMISSION" RESTRICT;
 
 ```bash
 DROP TABLE IF EXISTS "SMS_GATEWAY_USER"."ROLE" RESTRICT;
+```
+
+```bash
+DROP TABLE IF EXISTS "SMS_GATEWAY_USER"."USER_CODE" RESTRICT;
 ```
 
 6. Run migrations

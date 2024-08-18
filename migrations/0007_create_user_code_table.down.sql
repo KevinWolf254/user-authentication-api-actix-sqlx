@@ -1,0 +1,2 @@
+-- Add migration script here
+DROP TABLE IF EXISTS "SMS_GATEWAY_USER"."USER_CODE" RESTRICT;

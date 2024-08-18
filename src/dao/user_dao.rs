@@ -86,6 +86,16 @@ impl<'c> Table<'c, User> {
             .await
     }
 
+    pub async fn update_user(&self, user: &User) -> Result<User, sqlx::Error> {
+        let User { user_id, first_name, middle_name, surname, email_address: _email_address, mobile_number , enabled, email_confirmed, role_id, created_at: _created_at} = user;
+
+        sqlx::query_as!(User, 
+            r#"UPDATE "SMS_GATEWAY_USER"."USER" SET first_name = $1, middle_name = $2, surname = $3, mobile_number = $4, enabled = $5, email_confirmed = $6, role_id = $7 WHERE user_id = $8 RETURNING * "#, 
+            first_name, *middle_name, surname, *mobile_number, enabled, email_confirmed, role_id, user_id)
+            .fetch_one(&*self.pool) 
+            .await
+    }
+
     pub async fn delete(&self, user_id: &i32) -> Result<PgQueryResult, sqlx::Error> {
         sqlx::query_as!(PgQueryResult, 
             r#"DELETE FROM "SMS_GATEWAY_USER"."USER_CREDENTIAL" WHERE user_id = $1 "#, user_id)

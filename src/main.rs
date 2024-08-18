@@ -1,12 +1,11 @@
 use actix_web::{ web, App, HttpServer };
-use bulk_sms_api::model::jwt_config::JwtConfig;
-use bulk_sms_api::{AppState, handler};
+use bulk_sms_api::{handler, AppState, JwtConfig};
 use bulk_sms_api::dao::Database;
 use dotenvy::dotenv;
 use log::{info, warn};
 use std::env;
 use std::net::Ipv4Addr;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use argon2::Config;
 
 extern crate argon2;
@@ -54,14 +53,13 @@ async fn main() -> std::io::Result<()> {
 
     let secret = env::var("JWT_SECRET").expect("JWT_SECRET was not provided.");
     let expires_in = env::var("JWT_EXPIRES_IN").expect("JWT_EXPIRES_IN was not provided.").parse::<i64>().expect("JWT_EXPIRES_IN should be an i32.");
-
+    
     let jwt_config = JwtConfig {secret, expires_in};
     
     let app_state = web::Data::new(AppState {
-        connections: Mutex::new(0),
         context: Arc::new(db_context),
         argon_config: Arc::new(config),
-        jwt_config: Arc::new(jwt_config)
+        jwt_config: Arc::new(jwt_config),
     });
 
     let server = HttpServer::new(move || {

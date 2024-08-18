@@ -1,7 +1,7 @@
 use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
 
-use crate::{entity::{permission::Permission, role::Role, user::User}, error::{AppError, AppErrorType}, model::{claims::Claims, jwt_config::JwtConfig}};
+use crate::{entity::{permission::Permission, role::Role, user::User}, error::{AppError, AppErrorType}, model::claims::Claims, JwtConfig};
 
 pub async fn generate_token(user: User, role: Role, permissions: Vec<Permission>, config: &JwtConfig) -> Result<String , AppError> {
     let now = Utc::now();
